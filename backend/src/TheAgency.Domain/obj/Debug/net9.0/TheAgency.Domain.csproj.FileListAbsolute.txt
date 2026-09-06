@@ -1,0 +1,11 @@
+D:\web\elwkalla\backend\src\TheAgency.Domain\bin\Debug\net9.0\TheAgency.Domain.deps.json
+D:\web\elwkalla\backend\src\TheAgency.Domain\bin\Debug\net9.0\TheAgency.Domain.dll
+D:\web\elwkalla\backend\src\TheAgency.Domain\bin\Debug\net9.0\TheAgency.Domain.pdb
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.AssemblyInfoInputs.cache
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.AssemblyInfo.cs
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.csproj.CoreCompileInputs.cache
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.dll
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\refint\TheAgency.Domain.dll
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.pdb
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\ref\TheAgency.Domain.dll

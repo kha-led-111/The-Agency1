@@ -1,0 +1,94 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: theagency-prod-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: theagency_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prod_secure_password_99}
+      POSTGRES_DB: theagency_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U theagency_admin -d theagency_prod"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: theagency-prod-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata_prod:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: theagency-prod-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmqdata_prod:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack:3
+    container_name: theagency-prod-localstack
+    restart: always
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - localstack_prod:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3 ls"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+    container_name: theagency-prod-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DB_CONNECTION_STRING=Host=postgres;Port=5432;Database=theagency_prod;Username=theagency_admin;Password=${POSTGRES_PASSWORD:-prod_secure_password_99};
+      - REDIS_CONNECTION_STRING=redis:6379
+      - RABBITMQ_HOST=rabbitmq
+      - JWT_SECRET=ProdSecureJwtSecretKeyMin32CharsLongRequirement!
+      - JWT_ISSUER=TheAgency.Production
+      - JWT_AUDIENCE=TheAgency.App
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  pgdata_prod:
+  redisdata_prod:
+  rabbitmqdata_prod:
+  localstack_prod:

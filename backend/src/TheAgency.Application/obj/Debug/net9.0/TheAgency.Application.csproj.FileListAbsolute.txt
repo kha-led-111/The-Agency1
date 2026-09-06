@@ -1,0 +1,15 @@
+D:\web\elwkalla\backend\src\TheAgency.Application\bin\Debug\net9.0\TheAgency.Application.deps.json
+D:\web\elwkalla\backend\src\TheAgency.Application\bin\Debug\net9.0\TheAgency.Application.dll
+D:\web\elwkalla\backend\src\TheAgency.Application\bin\Debug\net9.0\TheAgency.Application.pdb
+D:\web\elwkalla\backend\src\TheAgency.Application\bin\Debug\net9.0\TheAgency.Domain.dll
+D:\web\elwkalla\backend\src\TheAgency.Application\bin\Debug\net9.0\TheAgency.Domain.pdb
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.csproj.AssemblyReference.cache
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.AssemblyInfoInputs.cache
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.AssemblyInfo.cs
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.csproj.CoreCompileInputs.cache
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgenc.89C55C6D.Up2Date
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.dll
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\refint\TheAgency.Application.dll
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.pdb
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\ref\TheAgency.Application.dll

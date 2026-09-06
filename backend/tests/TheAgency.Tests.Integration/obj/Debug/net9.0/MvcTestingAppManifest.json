@@ -1,0 +1,6 @@
+{
+  "TheAgency.API, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\web\\elwkalla\\backend\\src\\TheAgency.API",
+  "TheAgency.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\web\\elwkalla\\backend\\src\\TheAgency.Application",
+  "TheAgency.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\web\\elwkalla\\backend\\src\\TheAgency.Domain",
+  "TheAgency.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\web\\elwkalla\\backend\\src\\TheAgency.Infrastructure"
+}
