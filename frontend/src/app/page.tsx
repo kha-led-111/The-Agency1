@@ -83,7 +83,7 @@ export default function Home() {
           {categories.map((category) => (
             <Link
               key={category.name}
-              href={`/browse?category=${encodeURIComponent(category.name)}`}
+              href={`/category/${category.slug}`}
               className="group overflow-hidden rounded-2xl sm:rounded-3xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md flex flex-col"
             >
               <div className="relative h-36 sm:h-44 w-full overflow-hidden bg-stone-100">

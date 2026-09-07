@@ -22,13 +22,13 @@ function ResetPasswordContent() {
 
     if (newPassword !== confirmPassword) {
       setStatus("error");
-      setErrorMessage("Passwords do not match.");
+      setErrorMessage("كلمتا المرور غير متطابقتين.");
       return;
     }
 
     if (newPassword.length < 8) {
       setStatus("error");
-      setErrorMessage("Password must be at least 8 characters long.");
+      setErrorMessage("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.");
       return;
     }
 
@@ -53,7 +53,7 @@ function ResetPasswordContent() {
       } else {
         const data = await res.json().catch(() => ({}));
         setStatus("error");
-        setErrorMessage(data.detail || data.message || "Failed to reset password. Token may be invalid or expired.");
+        setErrorMessage(data.detail || data.message || "فشلت عملية إعادة ضبط كلمة المرور. قد يكون الرمز غير صالح أو منتهي الصلاحية.");
       }
     } catch {
       setStatus("success");
@@ -64,16 +64,16 @@ function ResetPasswordContent() {
   };
 
   return (
-    <main className="mx-auto max-w-md rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
+    <main className="mx-auto max-w-md rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm sm:p-8" dir="rtl">
       <div className="text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-900 text-white">
           <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-stone-900">Set New Password</h1>
-        <p className="mt-2 text-sm leading-6 text-stone-600">
-          Enter your reset token and choose a secure new password for your El Wkalla account.
+        <h1 className="mt-4 text-2xl font-bold tracking-tight text-stone-900">تعيين كلمة مرور جديدة</h1>
+        <p className="mt-2 text-sm leading-6 text-stone-600 font-medium">
+          أدخل رمز إعادة الضبط واختر كلمة مرور جديدة وآمنة لحسابك في منصة الوكالة.
         </p>
       </div>
 
@@ -82,75 +82,75 @@ function ResetPasswordContent() {
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-lg mb-3">
             ✓
           </div>
-          <h2 className="text-lg font-semibold">Password Reset Complete!</h2>
-          <p className="mt-1 text-sm text-emerald-800">
-            Your password has been updated. Redirecting to login...
+          <h2 className="text-lg font-bold">تمت إعادة ضبط كلمة المرور بنجاح!</h2>
+          <p className="mt-1 text-xs sm:text-sm text-emerald-800 font-medium">
+            تم تحديث كلمة المرور الخاصة بك. جاري تحويلك إلى صفحة تسجيل الدخول...
           </p>
           <Link
             href="/auth"
-            className="mt-6 inline-block rounded-2xl bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-700"
+            className="mt-6 inline-block rounded-2xl bg-stone-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-stone-800 shadow-sm"
           >
-            Log in Now →
+            تسجيل الدخول الآن ←
           </Link>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           {status === "error" && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-              <p className="font-semibold">Reset Failed</p>
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 font-medium">
+              <p className="font-bold">فشل إعادة الضبط</p>
               <p className="mt-1">{errorMessage}</p>
             </div>
           )}
 
           <label className="block text-sm text-stone-700">
-            <span className="mb-2 block font-medium">Reset Token</span>
+            <span className="mb-2 block font-bold">رمز إعادة الضبط (Token)</span>
             <input
               type="text"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder="Paste token from reset email"
+              placeholder="ألصق الرمز المرسل لك في البريد"
               required
-              className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:bg-white"
+              className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:bg-white font-medium"
             />
           </label>
 
           <label className="block text-sm text-stone-700">
-            <span className="mb-2 block font-medium">New Password</span>
+            <span className="mb-2 block font-bold">كلمة المرور الجديدة</span>
             <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 8 characters"
+              placeholder="8 أحرف على الأقل"
               required
-              className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:bg-white"
+              className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:bg-white font-medium"
             />
           </label>
 
           <label className="block text-sm text-stone-700">
-            <span className="mb-2 block font-medium">Confirm New Password</span>
+            <span className="mb-2 block font-bold">تأكيد كلمة المرور الجديدة</span>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter new password"
+              placeholder="أعد كتابة كلمة المرور الجديدة"
               required
-              className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:bg-white"
+              className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:bg-white font-medium"
             />
           </label>
 
           <button
             type="submit"
             disabled={status === "loading"}
-            className="w-full rounded-2xl bg-stone-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-stone-700 disabled:opacity-50"
+            className="w-full rounded-2xl bg-stone-900 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-stone-800 disabled:opacity-50 shadow-sm"
           >
-            {status === "loading" ? "Resetting password..." : "Update Password"}
+            {status === "loading" ? "جاري التحديث..." : "حفظ كلمة المرور الجديدة"}
           </button>
         </form>
       )}
 
-      <div className="mt-8 text-center text-xs text-stone-500">
-        <Link href="/auth" className="font-medium text-stone-900 hover:underline">
-          ← Back to Login
+      <div className="mt-8 text-center text-xs text-stone-500 font-medium">
+        <Link href="/auth" className="font-bold text-stone-900 hover:underline">
+          العودة إلى تسجيل الدخول
         </Link>
       </div>
     </main>
@@ -159,8 +159,9 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-stone-500">Loading reset form...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-stone-500 font-medium">جاري تحميل النموذج...</div>}>
       <ResetPasswordContent />
     </Suspense>
   );
 }
+

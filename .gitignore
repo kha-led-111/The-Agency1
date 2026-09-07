@@ -1,6 +1,6 @@
 # === .NET Core / Visual Studio ===
-[Ob]in/
-[Ob]bj/
+**/bin/
+**/obj/
 *.user
 *.userosscache
 *.sln.docstates
