@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   description: "المنصة الأكثر أماناً لبيع وشراء القطع المميزة والتوصيل الفوري مع الدفع عند الاستلام.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,13 +28,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
-      <body className="min-h-screen bg-stone-50 text-stone-900 font-sans antialiased">
+      <body className="min-h-screen bg-stone-50 text-stone-900 font-sans antialiased overflow-x-hidden selection:bg-stone-200">
         <SiteHeader />
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</div>
+        <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8 sm:py-8">{children}</div>
         <footer className="border-t border-stone-200 bg-white">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <p>© 2026 منصة الوكالة (El Wkalla). جميع الحقوق محفوظة.</p>
-            <div className="flex items-center gap-6">
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <p className="text-center sm:text-right">© 2026 منصة الوكالة (El Wkalla). جميع الحقوق محفوظة.</p>
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm">
               <span>الأمان وحماية المشتري</span>
               <span>شبكة التوصيل السريع</span>
               <span>الدفع عند الاستلام</span>
