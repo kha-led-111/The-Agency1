@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { products, mockOrders } from "@/lib/mock-data";
+import { useAuthRole } from "@/lib/auth";
 
 export default function AdminDashboardPage() {
+  const { isAdmin, isLoaded } = useAuthRole();
   const [moderationItems, setModerationItems] = useState(products.slice(0, 4));
   const [toast, setToast] = useState<string | null>(null);
 
@@ -19,6 +21,47 @@ export default function AdminDashboardPage() {
     setModerationItems((prev) => prev.filter((i) => i.title !== title));
     setTimeout(() => setToast(null), 3000);
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center text-stone-500 font-bold text-sm">
+        جاري التحقق من الصلاحيات...
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-12">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-red-100 border border-red-200 text-red-600 text-3xl shadow-sm mb-6">
+          🔒
+        </div>
+        <span className="inline-block rounded-full bg-red-500/10 border border-red-500/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-red-600 mb-3">
+          وصول محظور — إداري فقط
+        </span>
+        <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+          لوحة التحكم مخصصة للمسؤولين فقط
+        </h1>
+        <p className="mt-2.5 max-w-md text-xs sm:text-sm text-stone-500 font-medium leading-relaxed">
+          عفواً، لا تملك الصلاحيات الكافية لاستعراض مركز القيادة والعمليات أو مراجعة المعروضات والتقارير.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/"
+            className="rounded-full bg-stone-900 px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-stone-800 transition"
+          >
+            العودة للصفحة الرئيسية
+          </Link>
+          <Link
+            href="/profile"
+            className="rounded-full border border-stone-300 bg-white px-6 py-3 text-xs sm:text-sm font-bold text-stone-700 hover:bg-stone-100 transition"
+          >
+            تبديل الصلاحية من الملف الشخصي
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 pb-16">

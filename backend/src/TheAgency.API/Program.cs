@@ -101,6 +101,7 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<TheAgency.Application.Common.Interfaces.IPasswordHasher>();
     try
     {
         if (db.Database.IsRelational())
@@ -111,11 +112,14 @@ if (app.Environment.IsDevelopment())
         {
             await db.Database.EnsureCreatedAsync();
         }
+
+        await DbSeeder.SeedAdminUsersAsync(db, passwordHasher, app.Logger);
     }
     catch (Exception ex)
     {
         app.Logger.LogWarning("Relational DB migration skipped or failed: {Message}. Ensuring created...", ex.Message);
         await db.Database.EnsureCreatedAsync();
+        await DbSeeder.SeedAdminUsersAsync(db, passwordHasher, app.Logger);
     }
 
     app.UseSwagger();

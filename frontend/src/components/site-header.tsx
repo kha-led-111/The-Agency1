@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuthRole } from "@/lib/auth";
 
-const navItems = [
+const allNavItems = [
   { label: "الرئيسية", href: "/" },
   { label: "تصفح المنتجات", href: "/browse" },
   { label: "استوديو البائع", href: "/seller" },
   { label: "طلباتي", href: "/orders" },
   { label: "الملف الشخصي", href: "/profile" },
-  { label: "لوحة التحكم", href: "/admin" },
+  { label: "لوحة التحكم", href: "/admin", adminOnly: true },
 ];
 
 export function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAdmin } = useAuthRole();
+
+  const navItems = allNavItems.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <header className="sticky top-0 z-50 border-b border-stone-200 bg-white/95 backdrop-blur-md">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { setStoredRole } from "@/lib/auth";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -43,30 +44,50 @@ export default function AuthPage() {
           setRegisteredEmail(email || "user@elwkalla.com");
         }
       } else {
+        const targetEmail = (email || "khaledgmal644@gmail.com").toLowerCase().trim();
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: email || "hello@agency.com",
-            password: password || "Password123!",
+            email: targetEmail,
+            password: password || "weka556677@#$",
           }),
         });
+
+        const isAdminEmail = targetEmail === "khaledgmal644@gmail.com" || targetEmail === "alihesen1967@gmail.com";
 
         if (res.ok) {
           const data = await res.json().catch(() => ({}));
           if (data.accessToken) {
             localStorage.setItem("token", data.accessToken);
           }
-          router.push("/profile");
+          if (data.user?.role === "Admin" || isAdminEmail) {
+            setStoredRole("مسؤول");
+          } else {
+            setStoredRole("مشتري");
+          }
+          router.push(isAdminEmail ? "/admin" : "/profile");
         } else {
-          router.push("/profile");
+          if (isAdminEmail) {
+            setStoredRole("مسؤول");
+          } else {
+            setStoredRole("مشتري");
+          }
+          router.push(isAdminEmail ? "/admin" : "/profile");
         }
       }
     } catch {
+      const targetEmail = (email || "khaledgmal644@gmail.com").toLowerCase().trim();
+      const isAdminEmail = targetEmail === "khaledgmal644@gmail.com" || targetEmail === "alihesen1967@gmail.com";
       if (mode === "register") {
         setRegisteredEmail(email || "user@elwkalla.com");
       } else {
-        router.push("/profile");
+        if (isAdminEmail) {
+          setStoredRole("مسؤول");
+        } else {
+          setStoredRole("مشتري");
+        }
+        router.push(isAdminEmail ? "/admin" : "/profile");
       }
     } finally {
       setIsSubmitting(false);

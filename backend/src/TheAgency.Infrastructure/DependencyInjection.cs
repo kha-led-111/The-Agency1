@@ -65,7 +65,7 @@ public static class DependencyInjection
         services.AddAuthorization(options =>
         {
             options.AddPolicy("AdminOnly", policy => policy.RequireRole(nameof(UserRole.Admin)));
-            options.AddPolicy("Seller", policy => policy.RequireRole(nameof(UserRole.Seller), nameof(UserRole.Admin)));
+            options.AddPolicy("Seller", policy => policy.RequireRole(nameof(UserRole.Seller), nameof(UserRole.Buyer), nameof(UserRole.Admin)));
             options.AddPolicy("Courier", policy => policy.RequireRole(nameof(UserRole.Courier), nameof(UserRole.Admin)));
             options.AddPolicy("AuthenticatedUser", policy => policy.RequireAuthenticatedUser());
         });

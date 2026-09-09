@@ -3,15 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { mockLedger, products } from "@/lib/mock-data";
+import { useAuthRole, UserRole } from "@/lib/auth";
 
 export default function ProfilePage() {
-  const [activeRole, setActiveRole] = useState<"مشتري" | "بائع" | "مسؤول">("مشتري");
+  const { role: activeRole, changeRole } = useAuthRole();
   const [toast, setToast] = useState<string | null>(null);
 
   const favoriteProducts = products.slice(0, 3);
 
-  const handleRoleChange = (role: "مشتري" | "بائع" | "مسؤول") => {
-    setActiveRole(role);
+  const handleRoleChange = (role: UserRole) => {
+    changeRole(role);
     setToast(`تم تغيير الصلاحية النشطة للعرض إلى: ${role}`);
     setTimeout(() => setToast(null), 3000);
   };
