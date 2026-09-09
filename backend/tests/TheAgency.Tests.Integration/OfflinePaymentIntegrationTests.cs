@@ -60,7 +60,7 @@ public class OfflinePaymentIntegrationTests : IClassFixture<AgencyWebApplication
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new
         {
             productIds = new[] { product.Id },
-            shippingAddress = "100 Payment Blvd, Cairo, Egypt"
+            shippingAddress = "شارع النحاس، طنطا، مصر"
         });
         checkoutResponse.EnsureSuccessStatusCode();
         var order = (await checkoutResponse.Content.ReadFromJsonAsync<OrderDto>())!;

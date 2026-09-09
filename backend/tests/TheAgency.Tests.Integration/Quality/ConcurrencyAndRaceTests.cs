@@ -59,7 +59,7 @@ public sealed class ConcurrencyAndRaceTests : IClassFixture<AgencyWebApplication
         var tasks = buyerClients.Select(bClient => bClient.PostAsJsonAsync("/api/orders", new
         {
             productIds = new[] { product.Id },
-            shippingAddress = "Dubai Marina Tower 1"
+            shippingAddress = "شارع البحر، المحلة الكبرى"
         })).ToArray();
 
         var responses = await Task.WhenAll(tasks);
@@ -106,7 +106,7 @@ public sealed class ConcurrencyAndRaceTests : IClassFixture<AgencyWebApplication
             Content = JsonContent.Create(new
             {
                 productIds = new[] { product.Id },
-                shippingAddress = "Downtown Dubai"
+                shippingAddress = "شارع البحر، المحلة الكبرى"
             })
         };
         requestMessage1.Headers.Add("Idempotency-Key", idempotencyKey);
@@ -122,7 +122,7 @@ public sealed class ConcurrencyAndRaceTests : IClassFixture<AgencyWebApplication
             Content = JsonContent.Create(new
             {
                 productIds = new[] { product.Id },
-                shippingAddress = "Downtown Dubai"
+                shippingAddress = "شارع البحر، المحلة الكبرى"
             })
         };
         requestMessage2.Headers.Add("Idempotency-Key", idempotencyKey);

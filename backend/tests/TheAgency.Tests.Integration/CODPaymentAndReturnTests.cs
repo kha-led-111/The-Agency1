@@ -56,7 +56,7 @@ public class CODPaymentAndReturnTests : IClassFixture<AgencyWebApplicationFactor
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new
         {
             productIds = new[] { product.Id },
-            shippingAddress = "789 Nile Corniche, Cairo, Egypt"
+            shippingAddress = "شارع البحر، المحلة الكبرى، مصر"
         });
         checkoutResponse.EnsureSuccessStatusCode();
         var order = (await checkoutResponse.Content.ReadFromJsonAsync<OrderDto>())!;

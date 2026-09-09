@@ -1,4 +1,5 @@
 using FluentValidation;
+using TheAgency.Domain.Constants;
 
 namespace TheAgency.Application.Orders.Commands.CreateOrder;
 
@@ -8,6 +9,11 @@ public sealed class CreateOrderCommandValidator : AbstractValidator<CreateOrderC
     {
         RuleFor(x => x.BuyerId).NotEmpty();
         RuleFor(x => x.ProductIds).NotEmpty().WithMessage("At least one product must be selected for checkout.");
-        RuleFor(x => x.ShippingAddress).NotEmpty().Length(5, 500);
+        RuleFor(x => x.ShippingAddress)
+            .NotEmpty()
+            .Length(5, 500)
+            .Must(AllowedCities.IsCityAllowed)
+            .WithMessage("Shipping address must be within one of the supported cities: المحلة الكبرى, طنطا, شبين الكوم, المنصورة.");
     }
 }
+

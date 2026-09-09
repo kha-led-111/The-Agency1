@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { products } from "@/lib/mock-data";
+import { ALLOWED_CITIES } from "@/lib/cities";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -20,8 +21,9 @@ function CheckoutContent() {
   const [address, setAddress] = useState({
     fullName: "عمر المنصور",
     phone: "+20 100 987 6543",
-    district: "التجمع الخامس",
-    street: "فيلا 14، شارع التسعين",
+    city: ALLOWED_CITIES[0].nameAr,
+    district: "حي أول",
+    street: "شارع البحر، المحلة الكبرى",
     notes: "يرجى الاتصال قبل الوصول للتسليم.",
   });
 
@@ -59,7 +61,7 @@ function CheckoutContent() {
               <h2 className="text-base sm:text-lg font-bold text-stone-900 border-b border-stone-200 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <span>عنوان التوصيل</span>
                 <span className="w-fit text-[11px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                  منطقة مغطاة بالتوصيل السريع (30 ج.م)
+                  توصيل مباشر (30 ج.م)
                 </span>
               </h2>
 
@@ -86,7 +88,22 @@ function CheckoutContent() {
                 </div>
               </div>
 
+              {/* City Selection Dropdown & District */}
               <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">المدينة المعتمدة *</label>
+                  <select
+                    value={address.city}
+                    onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                    className="mt-1.5 w-full rounded-xl border border-stone-300 px-3.5 py-3 text-sm font-bold outline-none focus:border-stone-900 bg-white"
+                  >
+                    {ALLOWED_CITIES.map((c) => (
+                      <option key={c.id} value={c.nameAr}>
+                        {c.nameAr}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">الحي / المنطقة *</label>
                   <input
@@ -97,16 +114,17 @@ function CheckoutContent() {
                     className="mt-1.5 w-full rounded-xl border border-stone-300 px-3.5 py-3 text-sm font-medium outline-none focus:border-stone-900"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">العنوان التفصيلي *</label>
-                  <input
-                    type="text"
-                    required
-                    value={address.street}
-                    onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                    className="mt-1.5 w-full rounded-xl border border-stone-300 px-3.5 py-3 text-sm font-medium outline-none focus:border-stone-900"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">العنوان التفصيلي (الشارع والرقم) *</label>
+                <input
+                  type="text"
+                  required
+                  value={address.street}
+                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-stone-300 px-3.5 py-3 text-sm font-medium outline-none focus:border-stone-900"
+                />
               </div>
 
               <div>
@@ -157,7 +175,7 @@ function CheckoutContent() {
                   <span className="font-bold text-stone-900">{itemPrice.toFixed(2)} ج.م</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>رسوم التوصيل الثابتة (داخل القاهرة والجيزة)</span>
+                  <span>رسوم التوصيل الثابتة (المدن المتاحة)</span>
                   <span className="font-bold text-stone-900">{fixedDeliveryFee.toFixed(2)} ج.م</span>
                 </div>
                 <div className="flex justify-between">

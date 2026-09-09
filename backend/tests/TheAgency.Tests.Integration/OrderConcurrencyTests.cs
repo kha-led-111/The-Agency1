@@ -69,7 +69,7 @@ public class OrderConcurrencyTests : IClassFixture<AgencyWebApplicationFactory>
             var response = await buyer.Client.PostAsJsonAsync("/api/orders", new
             {
                 productIds = new[] { product.Id },
-                shippingAddress = "456 Parallel St, Cairo, Egypt"
+                shippingAddress = "البر الشرقي، شبين الكوم، مصر"
             });
             responses.Add(response);
         }));

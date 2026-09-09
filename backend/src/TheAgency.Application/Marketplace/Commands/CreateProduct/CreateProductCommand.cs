@@ -11,4 +11,6 @@ public sealed record CreateProductCommand(
     decimal Price,
     string Condition,
     Guid CategoryId,
-    string? ImageUrl) : IRequest<ProductDto>;
+    string? ImageUrl,
+    string? Location = null) : IRequest<ProductDto>;
+

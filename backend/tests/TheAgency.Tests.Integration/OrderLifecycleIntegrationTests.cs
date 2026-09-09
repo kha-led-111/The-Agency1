@@ -56,7 +56,7 @@ public class OrderLifecycleIntegrationTests : IClassFixture<AgencyWebApplication
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new
         {
             productIds = new[] { product.Id },
-            shippingAddress = "123 State Machine Way, Cairo, Egypt"
+            shippingAddress = "شارع البحر، المحلة الكبرى، مصر"
         });
         checkoutResponse.EnsureSuccessStatusCode();
         var order = (await checkoutResponse.Content.ReadFromJsonAsync<OrderDto>())!;

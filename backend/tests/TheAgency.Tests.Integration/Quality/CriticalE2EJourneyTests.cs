@@ -65,7 +65,7 @@ public sealed class CriticalE2EJourneyTests : IClassFixture<AgencyWebApplication
         var orderResp = await client.PostAsJsonAsync("/api/orders", new
         {
             productIds = new[] { productId },
-            shippingAddress = "Villa 99, Palm Jumeirah, Dubai"
+            shippingAddress = "فيلا 99، شارع النحاس، طنطا"
         });
         orderResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var order = (await orderResp.Content.ReadFromJsonAsync<OrderDto>())!;

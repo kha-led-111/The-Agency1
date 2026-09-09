@@ -59,7 +59,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Authentic
             PhoneNumber = request.PhoneNumber?.Trim() ?? string.Empty,
             Role = UserRole.Buyer,
             IsActive = true,
-            EmailVerifiedAtUtc = DateTime.UtcNow,
+            EmailVerifiedAtUtc = null,
             CreatedAtUtc = DateTime.UtcNow
         };
 

@@ -1,4 +1,5 @@
 using FluentValidation;
+using TheAgency.Domain.Constants;
 
 namespace TheAgency.Application.Marketplace.Commands.CreateProduct;
 
@@ -19,5 +20,13 @@ public sealed class CreateProductCommandValidator : AbstractValidator<CreateProd
                 || value.Equals("Good", System.StringComparison.OrdinalIgnoreCase)
                 || value.Equals("Fair", System.StringComparison.OrdinalIgnoreCase)))
             .WithMessage("Condition must be a valid marketplace condition.");
+
+        When(x => !string.IsNullOrWhiteSpace(x.Location), () =>
+        {
+            RuleFor(x => x.Location!)
+                .Must(AllowedCities.IsCityAllowed)
+                .WithMessage("Product location must be within one of the supported cities: المحلة الكبرى, طنطا, شبين الكوم, المنصورة.");
+        });
     }
 }
+
