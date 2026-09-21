@@ -12,13 +12,14 @@ COPY backend/tests/TheAgency.Tests.Unit/TheAgency.Tests.Unit.csproj tests/TheAge
 COPY backend/tests/TheAgency.Tests.Integration/TheAgency.Tests.Integration.csproj tests/TheAgency.Tests.Integration/
 
 # Restore Dependencies
-RUN dotnet restore backend/TheAgency.sln
+RUN dotnet restore TheAgency.sln
 
 # Copy Source Code
-COPY backend/ ./backend/
+COPY backend/src/ ./src/
+COPY backend/tests/ ./tests/
 
 # Build & Publish Release Output
-RUN dotnet publish backend/src/TheAgency.API/TheAgency.API.csproj -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish src/TheAgency.API/TheAgency.API.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime Production Stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
@@ -26,7 +27,7 @@ WORKDIR /app
 
 # Hardened Non-Root Security Configuration
 RUN addgroup -g 10001 -S appgroup && \
-    adduser -u 10001 -S appuser -G appgroup
+  adduser -u 10001 -S appuser -G appgroup
 
 COPY --from=build /app/publish ./
 RUN chown -R appuser:appgroup /app
