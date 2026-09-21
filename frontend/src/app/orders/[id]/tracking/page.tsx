@@ -227,10 +227,10 @@ export default function DeliveryTrackingPage({ params }: { params: Promise<{ id:
             <div className="flex items-center gap-2">
               <span
                 className={`w-fit rounded-full px-4 py-2 text-xs font-bold border shadow-sm ${isDelivered
-                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                    : isCancelled
-                      ? "bg-red-500/20 text-red-300 border-red-500/30"
-                      : "bg-amber-400/20 text-amber-300 border-amber-400/30 animate-pulse"
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                  : isCancelled
+                    ? "bg-red-500/20 text-red-300 border-red-500/30"
+                    : "bg-amber-400/20 text-amber-300 border-amber-400/30 animate-pulse"
                   }`}
               >
                 ● {isDelivered ? "تم التسليم بنجاح" : isCancelled ? "الطلب ملغي" : "التوصيل المباشر قيد التقدم"}
@@ -259,10 +259,10 @@ export default function DeliveryTrackingPage({ params }: { params: Promise<{ id:
                   {/* Step Node Icon */}
                   <div
                     className={`absolute -right-[34px] top-0.5 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ring-4 ring-white shadow-sm shrink-0 transition-all ${step.active
-                        ? "bg-amber-500 text-white shadow-amber-200 animate-bounce"
-                        : step.completed
-                          ? "bg-stone-900 text-white"
-                          : "bg-stone-200 text-stone-500"
+                      ? "bg-amber-500 text-white shadow-amber-200 animate-bounce"
+                      : step.completed
+                        ? "bg-stone-900 text-white"
+                        : "bg-stone-200 text-stone-500"
                       }`}
                   >
                     {step.completed ? "✓" : idx + 1}
