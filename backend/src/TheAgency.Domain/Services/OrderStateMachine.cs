@@ -13,6 +13,21 @@ public static class OrderStateMachine
         return (current, target) switch
         {
             // Payment & Initial flow
+            (OrderStatus.PendingAdminReview, OrderStatus.AssignedToDelivery) => true,
+            (OrderStatus.PendingAdminReview, OrderStatus.PendingSellerConfirmation) => true,
+            (OrderStatus.PendingAdminReview, OrderStatus.Processing) => true,
+            (OrderStatus.PendingAdminReview, OrderStatus.Cancelled) => true,
+
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.AssignedToDelivery) => true,
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Processing) => true,
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Paid) => true,
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Cancelled) => true,
+
+            (OrderStatus.AssignedToDelivery, OrderStatus.OutForDelivery) => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Delivered) => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Returned) => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Processing) => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Cancelled) => true,
             (OrderStatus.PendingPayment, OrderStatus.Paid) => true,
             (OrderStatus.PendingPayment, OrderStatus.Cancelled) => true,
 
@@ -22,16 +37,20 @@ public static class OrderStateMachine
 
             // Dispatch & Courier
             (OrderStatus.Processing, OrderStatus.OutForDelivery) => true,
+            (OrderStatus.Processing, OrderStatus.Delivered) => true,
+            (OrderStatus.Processing, OrderStatus.Returned) => true,
             (OrderStatus.Processing, OrderStatus.Cancelled) => true,
 
             (OrderStatus.OutForDelivery, OrderStatus.Delivered) => true,
             (OrderStatus.OutForDelivery, OrderStatus.FailedDelivery) => true,
+            (OrderStatus.OutForDelivery, OrderStatus.Returned) => true,
 
             (OrderStatus.FailedDelivery, OrderStatus.OutForDelivery) => true,
             (OrderStatus.FailedDelivery, OrderStatus.Cancelled) => true,
             (OrderStatus.FailedDelivery, OrderStatus.Returned) => true,
 
             // Returns
+            (OrderStatus.Delivered, OrderStatus.Returned) => true,
             (OrderStatus.Delivered, OrderStatus.ReturnRequested) => true,
             (OrderStatus.ReturnRequested, OrderStatus.Returned) => true,
             (OrderStatus.ReturnRequested, OrderStatus.Delivered) => true, // Return rejected
@@ -56,23 +75,36 @@ public static class OrderStateMachine
         return (current, target) switch
         {
             // Buyer can cancel when pending/paid, or request return when delivered
+            (OrderStatus.PendingAdminReview, OrderStatus.Cancelled) when isBuyer => true,
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Cancelled) when isBuyer => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Cancelled) when isBuyer => true,
             (OrderStatus.PendingPayment, OrderStatus.Cancelled) when isBuyer => true,
             (OrderStatus.Paid, OrderStatus.Cancelled) when isBuyer => true,
             (OrderStatus.Delivered, OrderStatus.ReturnRequested) when isBuyer => true,
 
-            // Seller can mark processing (ready for courier), cancel paid order, or process return request
-            (OrderStatus.Paid, OrderStatus.Processing) when isSeller => true,
+            // Seller can confirm availability (processing/paid), cancel paid order, or process return request
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Processing) when isSeller => true,
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Paid) when isSeller => true,
+            (OrderStatus.PendingSellerConfirmation, OrderStatus.Cancelled) when isSeller => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Cancelled) when isSeller => true,
             (OrderStatus.Paid, OrderStatus.Cancelled) when isSeller => true,
             (OrderStatus.Processing, OrderStatus.Cancelled) when isSeller => true,
             (OrderStatus.ReturnRequested, OrderStatus.Returned) when isSeller => true,
             (OrderStatus.ReturnRequested, OrderStatus.Delivered) when isSeller => true,
 
             // Courier can update delivery status transitions
+            (OrderStatus.AssignedToDelivery, OrderStatus.OutForDelivery) when role == UserRole.Courier => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Delivered) when role == UserRole.Courier => true,
+            (OrderStatus.AssignedToDelivery, OrderStatus.Returned) when role == UserRole.Courier => true,
             (OrderStatus.Processing, OrderStatus.OutForDelivery) when role == UserRole.Courier => true,
+            (OrderStatus.Processing, OrderStatus.Delivered) when role == UserRole.Courier => true,
+            (OrderStatus.Processing, OrderStatus.Returned) when role == UserRole.Courier => true,
             (OrderStatus.OutForDelivery, OrderStatus.Delivered) when role == UserRole.Courier => true,
             (OrderStatus.OutForDelivery, OrderStatus.FailedDelivery) when role == UserRole.Courier => true,
+            (OrderStatus.OutForDelivery, OrderStatus.Returned) when role == UserRole.Courier => true,
             (OrderStatus.FailedDelivery, OrderStatus.OutForDelivery) when role == UserRole.Courier => true,
             (OrderStatus.FailedDelivery, OrderStatus.Returned) when role == UserRole.Courier => true,
+            (OrderStatus.Delivered, OrderStatus.Returned) when role == UserRole.Courier => true,
 
             // Payment processor / system
             (OrderStatus.PendingPayment, OrderStatus.Paid) => true,

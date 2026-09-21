@@ -38,7 +38,8 @@ public sealed class SecurityRegressionTests : IClassFixture<AgencyWebApplication
             title = "Protected Item",
             description = "Only authorized owner can delete this product listing.",
             price = 50.0m,
-            condition = "Good"
+            condition = "Good",
+            imageUrl = "/uploads/test.jpg"
         });
         createProdResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var product = (await createProdResp.Content.ReadFromJsonAsync<ProductDto>())!;
@@ -74,6 +75,44 @@ public sealed class SecurityRegressionTests : IClassFixture<AgencyWebApplication
         var uploadResp = await client.PostAsync("/api/marketplace/upload-image", content);
 
         // Assert: Rejected due to invalid image magic bytes header (Rule 11)
+        uploadResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    [Trait("Category", "SecurityIntegration")]
+    public async Task Rule11_FileUpload_InvalidMimeType_RejectedWithBadRequest()
+    {
+        var client = _factory.CreateClient();
+        var userReg = await client.RegisterAsync($"uploader_mime_{Guid.NewGuid():N}@example.com");
+        var auth = (await userReg.Content.ReadFromJsonAsync<AuthenticationResult>())!;
+        client.UseBearer(auth.AccessToken);
+
+        byte[] pngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(pngHeader);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        content.Add(fileContent, "file", "sample.png");
+
+        var uploadResp = await client.PostAsync("/api/marketplace/upload-image", content);
+        uploadResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    [Trait("Category", "SecurityIntegration")]
+    public async Task Rule11_FileUpload_InvalidExtension_RejectedWithBadRequest()
+    {
+        var client = _factory.CreateClient();
+        var userReg = await client.RegisterAsync($"uploader_ext_{Guid.NewGuid():N}@example.com");
+        var auth = (await userReg.Content.ReadFromJsonAsync<AuthenticationResult>())!;
+        client.UseBearer(auth.AccessToken);
+
+        byte[] pngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(pngHeader);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        content.Add(fileContent, "file", "sample.txt");
+
+        var uploadResp = await client.PostAsync("/api/marketplace/upload-image", content);
         uploadResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 

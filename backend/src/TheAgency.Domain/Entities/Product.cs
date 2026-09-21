@@ -8,6 +8,8 @@ public class Product
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid SellerId { get; set; }
     public Guid CategoryId { get; set; }
+    public Guid? SubcategoryId { get; set; }
+    public string? Size { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -16,6 +18,7 @@ public class Product
     public ProductStatus Status { get; set; } = ProductStatus.Draft;
     public string? ImageUrl { get; set; }
     public bool IsApproved { get; set; }
+    public DateTime? ApprovedAt { get; set; }
     public Guid? BuyerId { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
@@ -23,4 +26,5 @@ public class Product
     public User Seller { get; set; } = default!;
     public User? Buyer { get; set; }
     public Category Category { get; set; } = default!;
+    public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 }

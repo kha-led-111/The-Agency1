@@ -5,11 +5,12 @@ namespace TheAgency.Domain.Enums;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ProductStatus
 {
-    Draft = 0,
-    Published = 1,
-    Reserved = 2,
-    Sold = 3,
-    Cancelled = 4,
-    Rejected = 5,
-    Removed = 6
+    Pending = 0,
+    Draft = 1,
+    Published = 2,
+    Reserved = 3,
+    Sold = 4,
+    Cancelled = 5,
+    Rejected = 6,
+    Removed = 7
 }

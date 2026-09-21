@@ -30,6 +30,8 @@ public class Order
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
 
+    public Guid? DeliveryAgentId { get; set; }
     public User Buyer { get; set; } = default!;
+    public User? DeliveryAgent { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

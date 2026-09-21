@@ -9,5 +9,6 @@ public enum TransactionType
     SellerPayout = 2,
     CourierFeePayout = 3,
     SellerReturnFeeDeduction = 4,
-    PlatformCommission = 5
+    PlatformCommission = 5,
+    BuyerReturnFeeDeduction = 6
 }

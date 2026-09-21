@@ -60,6 +60,23 @@ public static class DependencyInjection
                 ClockSkew = TimeSpan.FromSeconds(30),
                 IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret))
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+                    if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Token = authHeader["Bearer ".Length..].Trim();
+                    }
+                    else if (context.Request.Cookies.TryGetValue("accessToken", out var token))
+                    {
+                        context.Token = token;
+                    }
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         services.AddAuthorization(options =>

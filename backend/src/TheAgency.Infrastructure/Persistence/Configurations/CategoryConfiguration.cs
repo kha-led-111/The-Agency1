@@ -30,6 +30,11 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.HasIndex(x => x.Slug)
             .IsUnique();
 
+        builder.HasOne(x => x.Parent)
+            .WithMany(x => x.Subcategories)
+            .HasForeignKey(x => x.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(x => x.Products)
             .WithOne(x => x.Category)
             .HasForeignKey(x => x.CategoryId)
@@ -38,12 +43,12 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         var seedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         builder.HasData(
-            new Category { Id = ElectronicsId, Name = "Electronics", Slug = "electronics", Description = "Phones, laptops, gadgets & accessories", IsActive = true, CreatedAtUtc = seedDate },
-            new Category { Id = FashionId, Name = "Fashion", Slug = "fashion", Description = "Clothing, shoes, bags & watches", IsActive = true, CreatedAtUtc = seedDate },
-            new Category { Id = HomeGardenId, Name = "Home & Garden", Slug = "home-garden", Description = "Furniture, decor & appliances", IsActive = true, CreatedAtUtc = seedDate },
-            new Category { Id = BooksMediaId, Name = "Books & Media", Slug = "books-media", Description = "Textbooks, novels & media", IsActive = true, CreatedAtUtc = seedDate },
-            new Category { Id = VehiclesId, Name = "Vehicles", Slug = "vehicles", Description = "Cars, motorcycles & auto parts", IsActive = true, CreatedAtUtc = seedDate },
-            new Category { Id = OtherId, Name = "General & Other", Slug = "general-other", Description = "Everything else", IsActive = true, CreatedAtUtc = seedDate }
+            new Category { Id = ElectronicsId, Name = "إلكترونيات", Slug = "electronics", Description = "هواتف، كمبيوتر، وإلكترونيات ذكية", IsActive = true, CreatedAtUtc = seedDate },
+            new Category { Id = FashionId, Name = "ملابس نسائية", Slug = "fashion", Description = "ملابس، أزياء، حقائب وإكسسوارات نسائية", IsActive = true, CreatedAtUtc = seedDate },
+            new Category { Id = HomeGardenId, Name = "أثاث ومنزل", Slug = "home-garden", Description = "أثاث، ديكور ومستلزمات منزلية", IsActive = true, CreatedAtUtc = seedDate },
+            new Category { Id = BooksMediaId, Name = "كتب وميديا", Slug = "books-media", Description = "كتب، روايات ومستلزمات تعليمية", IsActive = true, CreatedAtUtc = seedDate },
+            new Category { Id = VehiclesId, Name = "سيارات ومحركات", Slug = "vehicles", Description = "سيارات، دراجات وقطع غيار", IsActive = true, CreatedAtUtc = seedDate },
+            new Category { Id = OtherId, Name = "عام وأخرى", Slug = "general-other", Description = "منتجات أخرى متنوعة", IsActive = true, CreatedAtUtc = seedDate }
         );
     }
 }

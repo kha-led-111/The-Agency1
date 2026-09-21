@@ -1,4 +1,5 @@
 using FluentValidation;
+using TheAgency.Domain.Services;
 
 namespace TheAgency.Application.Marketplace.Commands.UpdateProduct;
 
@@ -8,8 +9,14 @@ public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProd
     {
         RuleFor(x => x.ProductId).NotEmpty();
         RuleFor(x => x.SellerId).NotEmpty();
-        When(x => x.Title is not null, () => RuleFor(x => x.Title!).Length(3, 120));
-        When(x => x.Description is not null, () => RuleFor(x => x.Description!).Length(20, 2000));
+        When(x => x.Title is not null, () => RuleFor(x => x.Title!)
+            .Length(3, 120)
+            .Must(text => !ContactInfoDetector.ContainsContactInfo(text))
+            .WithMessage("يُمنع كتابة أرقام الهواتف أو الروابط الخارجية لضمان أمان المعاملات."));
+        When(x => x.Description is not null, () => RuleFor(x => x.Description!)
+            .Length(20, 2000)
+            .Must(text => !ContactInfoDetector.ContainsContactInfo(text))
+            .WithMessage("يُمنع كتابة أرقام الهواتف أو الروابط الخارجية لضمان أمان المعاملات."));
         When(x => x.Price is not null, () => RuleFor(x => x.Price!.Value).GreaterThan(0));
         When(x => x.Condition is not null, () => RuleFor(x => x.Condition!)
             .Must(value => value is not null && (value.Equals("New", System.StringComparison.OrdinalIgnoreCase)

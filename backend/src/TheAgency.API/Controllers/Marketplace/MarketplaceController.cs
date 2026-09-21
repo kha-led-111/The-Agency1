@@ -56,15 +56,17 @@ public class MarketplaceController : ControllerBase
     public async Task<IActionResult> GetProducts(
         [FromQuery] string? search,
         [FromQuery] Guid? categoryId,
+        [FromQuery] Guid? subcategoryId,
         [FromQuery] decimal? minPrice,
         [FromQuery] decimal? maxPrice,
         [FromQuery] ProductCondition? condition,
+        [FromQuery] string? size,
         [FromQuery] string? sortBy,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 12,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetProductsQuery(search, categoryId, minPrice, maxPrice, condition, sortBy, pageNumber, pageSize);
+        var query = new GetProductsQuery(search, categoryId, subcategoryId, minPrice, maxPrice, condition, size, sortBy, pageNumber, pageSize);
         var products = await _sender.Send(query, cancellationToken);
         return Ok(products);
     }
@@ -93,7 +95,11 @@ public class MarketplaceController : ControllerBase
             request.Price,
             request.Condition,
             request.CategoryId,
-            request.ImageUrl);
+            request.ImageUrl,
+            Location: request.Location,
+            Governorate: request.Governorate,
+            City: request.City,
+            ImageUrls: request.ImageUrls);
 
         var product = await _sender.Send(command, cancellationToken);
         return Ok(product);
@@ -135,14 +141,17 @@ public class MarketplaceController : ControllerBase
 
     [Authorize]
     [HttpPost("upload-image")]
+    [HttpPost("/api/products/upload")]
     [Consumes("multipart/form-data")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UploadImage(IFormFile file, CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
         {
-            return BadRequest(new { error = "No file was uploaded." });
+            return BadRequest(new { error = "لم يتم اختيار أي ملف للرفع." });
         }
 
         using var stream = file.OpenReadStream();

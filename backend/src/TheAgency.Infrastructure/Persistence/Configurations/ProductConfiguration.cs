@@ -39,6 +39,11 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.ImageUrl)
             .HasMaxLength(500);
 
+        builder.HasIndex(x => x.SellerId);
+        builder.HasIndex(x => x.CategoryId);
+        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.CreatedAtUtc);
+
         builder.HasOne(x => x.Seller)
             .WithMany(x => x.Products)
             .HasForeignKey(x => x.SellerId)

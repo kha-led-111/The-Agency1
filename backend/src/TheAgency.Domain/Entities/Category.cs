@@ -12,5 +12,9 @@ public class Category
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
+    public Guid? ParentId { get; set; }
+    public Category? Parent { get; set; }
+    public ICollection<Category> Subcategories { get; set; } = new List<Category>();
+
     public ICollection<Product> Products { get; set; } = new List<Product>();
 }

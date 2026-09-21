@@ -50,11 +50,15 @@ public sealed class CriticalE2EJourneyTests : IClassFixture<AgencyWebApplication
             title = "Vintage Mechanical Watch",
             description = "Rare 1970s watch in immaculate working condition and original box.",
             price = 400.0m,
-            condition = "LikeNew"
+            condition = "LikeNew",
+            imageUrl = "/uploads/test.jpg"
         });
         createProductResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var product = (await createProductResp.Content.ReadFromJsonAsync<ProductDto>())!;
         var productId = product.Id;
+
+        var adminClient = _factory.CreateClient();
+        await adminClient.ApproveProductAsync(productId);
 
         // 3. Buyer Browses Marketplace & Locates Listing
         client.UseBearer(buyerToken);

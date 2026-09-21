@@ -18,6 +18,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
+    options.ValueLengthLimit = 10 * 1024 * 1024;
+});
+
+try
+{
+    var webRootPath = builder.Environment.WebRootPath ?? System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot");
+    var uploadsProductsDirectory = System.IO.Path.Combine(webRootPath, "uploads", "products");
+    if (!System.IO.Directory.Exists(uploadsProductsDirectory))
+    {
+        System.IO.Directory.CreateDirectory(uploadsProductsDirectory);
+    }
+}
+catch
+{
+    // Ignore in test environment
+}
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -47,6 +67,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "The Agency API",
@@ -89,7 +110,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -113,13 +135,13 @@ if (app.Environment.IsDevelopment())
             await db.Database.EnsureCreatedAsync();
         }
 
-        await DbSeeder.SeedAdminUsersAsync(db, passwordHasher, app.Logger);
+        await DbSeeder.SeedAsync(db, passwordHasher, app.Logger);
     }
     catch (Exception ex)
     {
         app.Logger.LogWarning("Relational DB migration skipped or failed: {Message}. Ensuring created...", ex.Message);
         await db.Database.EnsureCreatedAsync();
-        await DbSeeder.SeedAdminUsersAsync(db, passwordHasher, app.Logger);
+        await DbSeeder.SeedAsync(db, passwordHasher, app.Logger);
     }
 
     app.UseSwagger();

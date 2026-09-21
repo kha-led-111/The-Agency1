@@ -44,7 +44,22 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 
         var productIds = request.ProductIds.Distinct().ToList();
 
-        // 2. Rule 9 Concurrency Protection — Thread-safe atomic reservation
+        // 2. Request Deduplication Check (Same BuyerId + ProductId in last 10 seconds)
+        var deduplicationCutoff = DateTime.UtcNow.AddSeconds(-10);
+        var recentDuplicateOrder = await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.OrderItems)
+                .ThenInclude(i => i.Product)
+            .Where(o => o.BuyerId == request.BuyerId && o.CreatedAtUtc >= deduplicationCutoff)
+            .Where(o => o.OrderItems.Any(i => productIds.Contains(i.ProductId)))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (recentDuplicateOrder is not null)
+        {
+            return OrderDto.From(recentDuplicateOrder);
+        }
+
+        // 3. Rule 9 Concurrency Protection — Thread-safe atomic reservation
         await CheckoutLock.WaitAsync(cancellationToken);
         try
         {
@@ -61,14 +76,32 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
             var unavailableProducts = products.Where(p => p.Status != ProductStatus.Published || !p.IsApproved).ToList();
             if (unavailableProducts.Count > 0)
             {
-                throw new ConflictException("One or more selected products have already been reserved or sold by another buyer.");
+                throw new ConflictException("عذراً، هذا المنتج تم حجزه أو شراؤه للتو بواسطة مستخدم آخر.");
             }
 
             // Prevent self-purchase
             var selfPurchased = products.Where(p => p.SellerId == request.BuyerId).ToList();
             if (selfPurchased.Count > 0)
             {
-                throw new ValidationException("Sellers cannot purchase their own product listings.");
+                throw new ValidationException("لا يمكنك شراء المنتجات التي قمت برفعها بنفسك");
+            }
+
+            // Validate mandatory address completeness & Egyptian phone format (11 digits starting with 01)
+            var hasValidAddress = !string.IsNullOrWhiteSpace(request.ShippingAddress) && request.ShippingAddress.Trim().Length >= 5;
+            if (!hasValidAddress)
+            {
+                throw new ValidationException("عنوان التوصيل غير مكتمل. يرجى إدخال عنوان تفصيلي مكون من 5 حروف على الأقل.");
+            }
+
+            var buyer = await _context.Users.FindAsync(new object[] { request.BuyerId }, cancellationToken);
+            if (buyer is not null && !string.IsNullOrWhiteSpace(buyer.PhoneNumber))
+            {
+                var cleanDigits = System.Text.RegularExpressions.Regex.Replace(buyer.PhoneNumber, @"\D", "");
+                var isPhoneValid = System.Text.RegularExpressions.Regex.IsMatch(cleanDigits, @"^01[0125]\d{8}$");
+                if (!isPhoneValid)
+                {
+                    throw new ValidationException("يلزم وجود رقم هاتف مصري صالح (11 رقم يبدأ بـ 01) وعنوان توصيل مكتمل لإتمام الطلب.");
+                }
             }
 
             // 3. Multi-Party Commission Financial Calculation (Rule 8 & ADR-003)
@@ -89,7 +122,8 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
                 PlatformEarnings = financials.PlatformEarnings,
                 TotalAmount = financials.TotalAmountPayableByBuyer,
                 ShippingAddress = request.ShippingAddress.Trim(),
-                Status = OrderStatus.PendingPayment,
+                Status = OrderStatus.PendingAdminReview,
+                DeliveryAgentId = null,
                 PaymentMethod = PaymentMethod.CashOnDelivery,
                 IdempotencyKey = request.IdempotencyKey,
                 CreatedAtUtc = DateTime.UtcNow
@@ -110,8 +144,29 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
                 });
             }
 
+            var sellerIds = products.Select(p => p.SellerId).Distinct();
+            foreach (var sellerId in sellerIds)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = sellerId,
+                    Title = "طلب جديد بحاجة لتأكيد التوفر",
+                    Message = $"لديك طلب جديد رقم {orderNumber}. يرجى تأكيد توفر القطعة وتجهيزها أو الإلغاء إذا كانت غير متاحة حالياً.",
+                    Type = NotificationType.InApp,
+                    Status = NotificationStatus.Unread,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
+
             _context.Orders.Add(order);
-            await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConflictException("عذراً، هذا المنتج تم حجزه أو شراؤه للتو بواسطة مستخدم آخر.");
+            }
 
             // Load items with product title for clean DTO
             var createdOrder = await _context.Orders

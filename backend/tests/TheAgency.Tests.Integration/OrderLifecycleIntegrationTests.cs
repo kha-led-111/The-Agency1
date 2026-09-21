@@ -47,12 +47,25 @@ public class OrderLifecycleIntegrationTests : IClassFixture<AgencyWebApplication
             title = $"Lifecycle Test Item {Guid.NewGuid():N}",
             description = "Test item for order state machine transitions.",
             price = 300.00m,
-            condition = "LikeNew"
+            condition = "LikeNew",
+            imageUrl = "/uploads/test.jpg"
         });
         createProdResponse.EnsureSuccessStatusCode();
         var product = (await createProdResponse.Content.ReadFromJsonAsync<ProductDto>())!;
 
-        // 2. Buyer Checkout -> PendingPayment
+        var adminClient = _factory.CreateClient();
+        var adminLogin = await adminClient.PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "khaledgmal644@gmail.com",
+            password = "Admin123!"
+        });
+        adminLogin.StatusCode.Should().Be(HttpStatusCode.OK);
+        var adminAuth = (await adminLogin.Content.ReadFromJsonAsync<AuthenticationResult>())!;
+        adminClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminAuth.AccessToken);
+
+        await adminClient.ApproveProductAsync(product.Id);
+
+        // 2. Buyer Checkout -> PendingAdminReview
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new
         {
             productIds = new[] { product.Id },
@@ -60,32 +73,28 @@ public class OrderLifecycleIntegrationTests : IClassFixture<AgencyWebApplication
         });
         checkoutResponse.EnsureSuccessStatusCode();
         var order = (await checkoutResponse.Content.ReadFromJsonAsync<OrderDto>())!;
-        order.Status.Should().Be("PendingPayment");
+        order.Status.Should().Be("PendingAdminReview");
 
-        // 3. Settle Payment -> Paid
-        var settleResponse = await buyerClient.PostAsync($"/api/orders/{order.Id}/settle-cod", null);
-        settleResponse.EnsureSuccessStatusCode();
-        var paidOrder = (await settleResponse.Content.ReadFromJsonAsync<OrderDto>())!;
-        paidOrder.Status.Should().Be("Paid");
+        // 3. Admin assigns delivery agent -> AssignedToDelivery
+        var (_, courierAuth) = await CreateAuthenticatedUserAsync("lifecourier");
 
-        // 4. Seller updates status Paid -> Processing
-        var processingResponse = await sellerClient.PatchAsJsonAsync($"/api/orders/{order.Id}/status", new
+        var assignResponse = await adminClient.PostAsJsonAsync($"/api/admin/orders/{order.Id}/assign-delivery", new
         {
-            status = "Processing"
+            deliveryAgentId = courierAuth.User.Id,
+            notes = "Test assignment"
         });
-        processingResponse.EnsureSuccessStatusCode();
-        var processingOrder = (await processingResponse.Content.ReadFromJsonAsync<OrderDto>())!;
-        processingOrder.Status.Should().Be("Processing");
+        assignResponse.EnsureSuccessStatusCode();
+        var assignedOrder = (await assignResponse.Content.ReadFromJsonAsync<OrderDto>())!;
+        assignedOrder.Status.Should().Be("AssignedToDelivery");
 
-        // 5. Invalid transition: Buyer tries to jump Processing -> Delivered (should fail)
+        // 4. Invalid transition: Buyer tries to jump Processing -> Delivered (should fail)
         var invalidResponse = await buyerClient.PatchAsJsonAsync($"/api/orders/{order.Id}/status", new
         {
             status = "Delivered"
         });
         invalidResponse.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
 
-        // 6. Buyer requests return when delivered (Delivered -> ReturnRequested)
-        // Seller can cancel processing order -> Cancelled
+        // 5. Seller can cancel processing order -> Cancelled
         var cancelResponse = await sellerClient.PatchAsJsonAsync($"/api/orders/{order.Id}/status", new
         {
             status = "Cancelled"

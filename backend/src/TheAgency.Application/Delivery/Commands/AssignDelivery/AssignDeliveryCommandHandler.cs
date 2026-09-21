@@ -76,6 +76,10 @@ public sealed class AssignDeliveryCommandHandler : IRequestHandler<AssignDeliver
         deliveryTask.AssignedAtUtc = DateTime.UtcNow;
         deliveryTask.UpdatedAtUtc = DateTime.UtcNow;
 
+        order.DeliveryAgentId = selectedCourierProfile.UserId;
+        order.Status = OrderStatus.AssignedToDelivery;
+        order.UpdatedAtUtc = DateTime.UtcNow;
+
         selectedCourierProfile.ActiveDeliveriesCount += 1;
         selectedCourierProfile.UpdatedAtUtc = DateTime.UtcNow;
 

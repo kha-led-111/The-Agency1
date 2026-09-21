@@ -63,21 +63,30 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         };
     }
 
-    private static HttpValidationProblemDetails CreateValidationProblem(HttpContext httpContext, ValidationException exception)
+    private static ProblemDetails CreateValidationProblem(HttpContext httpContext, ValidationException exception)
     {
-        var errors = exception.Errors
-            .GroupBy(e => e.PropertyName)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(e => e.ErrorMessage).ToArray());
-
-        return new HttpValidationProblemDetails(errors)
+        if (exception.Errors != null && exception.Errors.Any())
         {
-            Status = StatusCodes.Status400BadRequest,
-            Title = "Validation failed",
-            Detail = "One or more fields are invalid.",
-            Instance = httpContext.Request.Path,
-            Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1"
-        };
+            var errors = exception.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray());
+
+            return new HttpValidationProblemDetails(errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Validation failed",
+                Detail = "One or more fields are invalid.",
+                Instance = httpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+            };
+        }
+
+        return CreateProblem(
+            httpContext,
+            StatusCodes.Status400BadRequest,
+            "Validation failed",
+            exception.Message);
     }
 }

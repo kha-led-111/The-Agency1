@@ -36,6 +36,8 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
             throw new UnauthorizedException("You can only update your own products.");
         }
 
+        bool wasApprovedOrPublished = product.IsApproved || product.Status == ProductStatus.Published;
+
         if (!string.IsNullOrWhiteSpace(request.Title))
         {
             product.Title = request.Title.Trim();
@@ -57,14 +59,15 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
             product.Condition = condition;
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<ProductStatus>(request.Status, true, out var status))
-        {
-            product.Status = status;
-        }
-
         if (!string.IsNullOrWhiteSpace(request.ImageUrl))
         {
             product.ImageUrl = request.ImageUrl;
+        }
+
+        if (wasApprovedOrPublished)
+        {
+            product.IsApproved = false;
+            product.Status = ProductStatus.Pending;
         }
 
         product.UpdatedAtUtc = DateTime.UtcNow;

@@ -47,10 +47,17 @@ public class CODPaymentAndReturnTests : IClassFixture<AgencyWebApplicationFactor
             title = $"COD Leather Jacket {Guid.NewGuid():N}",
             description = "High quality genuine leather jacket for autumn.",
             price = 200.00m,
-            condition = "Excellent"
+            condition = "Excellent",
+            imageUrl = "/uploads/test.jpg",
+            imageUrls = new[] { "/uploads/test1.jpg", "/uploads/test2.jpg" },
+            governorate = "الغربية",
+            city = "طنطا"
         });
         createProdResponse.EnsureSuccessStatusCode();
         var product = (await createProdResponse.Content.ReadFromJsonAsync<ProductDto>())!;
+
+        var adminClient = _factory.CreateClient();
+        await adminClient.ApproveProductAsync(product.Id);
 
         // 2. Buyer Checkout COD
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new
@@ -82,8 +89,7 @@ public class CODPaymentAndReturnTests : IClassFixture<AgencyWebApplicationFactor
         var returnedOrder = (await returnResponse.Content.ReadFromJsonAsync<OrderDto>())!;
 
         returnedOrder.ReturnFee.Should().Be(20.00m);
-        returnedOrder.ReturnPercentageFee.Should().Be(0.00m);
-        returnedOrder.Status.Should().Be("Cancelled");
+        returnedOrder.Status.Should().Be("Returned");
 
         // Verify product restored back to Published
         var getProductResponse = await buyerClient.GetAsync($"/api/marketplace/{product.Slug}");

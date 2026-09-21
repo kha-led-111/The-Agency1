@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TheAgency.Application.Orders.Commands.CancelOrder;
+using TheAgency.Application.Orders.Commands.ConfirmSellerAvailability;
 using TheAgency.Application.Orders.Commands.CreateOrder;
 using TheAgency.Application.Orders.Commands.ProcessReturnOrder;
 using TheAgency.Application.Orders.Commands.SettleCODPayment;
@@ -55,7 +56,7 @@ public class OrdersController : ControllerBase
             ? idempotencyHeader
             : request.IdempotencyKey;
 
-        var command = new CreateOrderCommand(userId, request.ProductIds, request.ShippingAddress, idempotencyKey);
+        var command = new CreateOrderCommand(userId, request.ProductIds, request.ShippingAddress, idempotencyKey, request.Governorate, request.City);
         var order = await _sender.Send(command, cancellationToken);
         return Ok(order);
     }
@@ -148,4 +149,21 @@ public class OrdersController : ControllerBase
         var order = await _sender.Send(command, cancellationToken);
         return Ok(order);
     }
+
+    [HttpPost("{id:guid}/seller-confirmation")]
+    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ConfirmSellerAvailability(
+        Guid id,
+        [FromBody] SellerConfirmationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var sellerId = GetCurrentUserId();
+        var command = new ConfirmSellerAvailabilityCommand(id, sellerId, request.IsAvailable, request.Reason);
+        var order = await _sender.Send(command, cancellationToken);
+        return Ok(order);
+    }
 }
+
+public sealed record SellerConfirmationRequest(bool IsAvailable, string? Reason = null);

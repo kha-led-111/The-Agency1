@@ -92,7 +92,8 @@ public class MarketplaceEndpointsTests : IClassFixture<AgencyWebApplicationFacto
             title = $"Original Item {Guid.NewGuid():N}",
             description = "Original seller item",
             price = 100m,
-            condition = "New"
+            condition = "New",
+            imageUrl = "/uploads/test.jpg"
         });
         var product = (await createResponse.Content.ReadFromJsonAsync<ProductDto>())!;
 
@@ -122,7 +123,8 @@ public class MarketplaceEndpointsTests : IClassFixture<AgencyWebApplicationFacto
             title = $"Bookmarked Item {Guid.NewGuid():N}",
             description = "Item to favorite in marketplace test suite",
             price = 50m,
-            condition = "Good"
+            condition = "Good",
+            imageUrl = "/uploads/test.jpg"
         });
         createResponse.EnsureSuccessStatusCode();
         var product = (await createResponse.Content.ReadFromJsonAsync<ProductDto>())!;
@@ -141,5 +143,18 @@ public class MarketplaceEndpointsTests : IClassFixture<AgencyWebApplicationFacto
         // Remove favorite
         var removeFavResponse = await buyerClient.DeleteAsync($"/api/marketplace/{product.Id}/favorite");
         removeFavResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetProducts_WithMultiFilteringAndPagination_ShouldReturnFilteredPagedResult()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/api/marketplace?minPrice=10&maxPrice=10000&condition=LikeNew&pageSize=12&pageNumber=1");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var pagedResult = await response.Content.ReadFromJsonAsync<PagedResult<ProductDto>>();
+        pagedResult.Should().NotBeNull();
+        pagedResult!.PageSize.Should().Be(12);
+        pagedResult.PageNumber.Should().Be(1);
     }
 }

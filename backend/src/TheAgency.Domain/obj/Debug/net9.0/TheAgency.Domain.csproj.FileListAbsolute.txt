@@ -9,3 +9,4 @@ D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.d
 D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\refint\TheAgency.Domain.dll
 D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.pdb
 D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\ref\TheAgency.Domain.dll
+D:\web\elwkalla\backend\src\TheAgency.Domain\obj\Debug\net9.0\TheAgency.Domain.sourcelink.json

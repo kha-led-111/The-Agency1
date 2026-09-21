@@ -19,4 +19,12 @@ public interface IPaymentProvider
         Guid sellerId,
         decimal fixedSellerReturnFee,
         CancellationToken cancellationToken = default);
+
+    Task<PaymentTransactionDto> ProcessFullReturnSettlementAsync(
+        Order order,
+        Guid buyerId,
+        Guid sellerId,
+        Guid? courierId,
+        decimal returnFee = 20.00m,
+        CancellationToken cancellationToken = default);
 }

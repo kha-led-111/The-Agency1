@@ -18,6 +18,11 @@ public sealed class UploadProductImageCommandHandler : IRequestHandler<UploadPro
         ".jpg", ".jpeg", ".png", ".webp"
     };
 
+    private static readonly HashSet<string> AllowedMimeTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg", "image/jpg", "image/png", "image/webp"
+    };
+
     private readonly IImageStorageService _storageService;
 
     public UploadProductImageCommandHandler(IImageStorageService storageService)
@@ -29,18 +34,26 @@ public sealed class UploadProductImageCommandHandler : IRequestHandler<UploadPro
     {
         if (request.FileStream is null || request.Length <= 0)
         {
-            throw new ValidationException("Uploaded file is empty.");
+            throw new ValidationException("الملف المرفق فارغ أو غير صالح.");
         }
 
         if (request.Length > MaxFileSizeBytes)
         {
-            throw new ValidationException("File size exceeds 5 MB limit.");
+            throw new ValidationException("حجم الصورة يتجاوز الحد الأقصى المسموح به (5 ميجابايت).");
         }
 
         var extension = Path.GetExtension(request.FileName);
-        if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
+        var isValidExtension = !string.IsNullOrWhiteSpace(extension) && AllowedExtensions.Contains(extension);
+
+        if (!isValidExtension)
         {
-            throw new ValidationException("Invalid image file format. Only JPG, PNG, and WebP are allowed.");
+            throw new ValidationException("صيغة الملف غير مدعومة. يسمح فقط بصور من نوع (JPG, JPEG, PNG, WebP).");
+        }
+
+        var isMimeValid = !string.IsNullOrWhiteSpace(request.ContentType) && AllowedMimeTypes.Contains(request.ContentType);
+        if (!isMimeValid)
+        {
+            throw new ValidationException("نوع الملف (MIME type) غير مدعوم. يسمح فقط بصور من نوع (JPG, JPEG, PNG, WebP).");
         }
 
         // Validate image magic bytes
@@ -50,7 +63,7 @@ public sealed class UploadProductImageCommandHandler : IRequestHandler<UploadPro
 
         if (readBytes < 4 || !IsValidImageHeader(header, extension))
         {
-            throw new ValidationException("File payload magic header does not match a valid image.");
+            throw new ValidationException("محتوى الملف غير صالح ولا يطابق صيغ الصور المدعومة (JPG, PNG, WebP).");
         }
 
         var safeFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";

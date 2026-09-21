@@ -13,5 +13,8 @@ public enum OrderStatus
     Cancelled = 5,
     FailedDelivery = 6,
     ReturnRequested = 7,
-    Returned = 8
+    Returned = 8,
+    PendingSellerConfirmation = 9,
+    PendingAdminReview = 10,
+    AssignedToDelivery = 11
 }

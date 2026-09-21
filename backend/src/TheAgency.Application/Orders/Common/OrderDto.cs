@@ -5,6 +5,20 @@ using TheAgency.Domain.Entities;
 
 namespace TheAgency.Application.Orders.Common;
 
+public sealed record CourierDto(
+    Guid Id,
+    string Name,
+    string PhoneNumber,
+    string? Email = null
+);
+
+public sealed record BuyerDto(
+    Guid Id,
+    string Name,
+    string PhoneNumber,
+    string? Email = null
+);
+
 public sealed record OrderDto(
     Guid Id,
     string OrderNumber,
@@ -23,7 +37,10 @@ public sealed record OrderDto(
     string PaymentMethod,
     string? IdempotencyKey,
     DateTime CreatedAtUtc,
-    IReadOnlyList<OrderItemDto> Items
+    IReadOnlyList<OrderItemDto> Items,
+    Guid? DeliveryAgentId = null,
+    CourierDto? Courier = null,
+    BuyerDto? Buyer = null
 )
 {
     public static OrderDto From(Order order)
@@ -46,7 +63,14 @@ public sealed record OrderDto(
             order.PaymentMethod.ToString(),
             order.IdempotencyKey,
             order.CreatedAtUtc,
-            order.OrderItems?.Select(OrderItemDto.From).ToList() ?? new List<OrderItemDto>()
+            order.OrderItems?.Select(OrderItemDto.From).ToList() ?? new List<OrderItemDto>(),
+            order.DeliveryAgentId,
+            order.DeliveryAgent != null
+                ? new CourierDto(order.DeliveryAgent.Id, $"{order.DeliveryAgent.FirstName} {order.DeliveryAgent.LastName}".Trim(), order.DeliveryAgent.PhoneNumber ?? string.Empty, order.DeliveryAgent.Email)
+                : null,
+            order.Buyer != null
+                ? new BuyerDto(order.Buyer.Id, $"{order.Buyer.FirstName} {order.Buyer.LastName}".Trim(), order.Buyer.PhoneNumber ?? string.Empty, order.Buyer.Email)
+                : null
         );
     }
 }

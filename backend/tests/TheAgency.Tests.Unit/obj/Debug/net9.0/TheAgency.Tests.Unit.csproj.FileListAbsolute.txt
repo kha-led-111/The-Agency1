@@ -151,3 +151,4 @@ D:\web\elwkalla\backend\tests\TheAgency.Tests.Unit\bin\Debug\net9.0\TheAgency.In
 D:\web\elwkalla\backend\tests\TheAgency.Tests.Unit\bin\Debug\net9.0\TheAgency.Infrastructure.pdb
 d:\web\elwkalla\backend\tests\TheAgency.Tests.Unit\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll
 d:\web\elwkalla\backend\tests\TheAgency.Tests.Unit\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+D:\web\elwkalla\backend\tests\TheAgency.Tests.Unit\obj\Debug\net9.0\TheAgency.Tests.Unit.sourcelink.json

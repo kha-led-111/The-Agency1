@@ -40,20 +40,62 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
         var title = request.Title.Trim();
         var slug = CreateSlug(title);
 
+        var mainImageUrl = request.ImageUrl;
+        var imageUrlList = new System.Collections.Generic.List<string>();
+
+        if (request.ImageUrls != null && request.ImageUrls.Count > 0)
+        {
+            foreach (var url in request.ImageUrls)
+            {
+                if (!string.IsNullOrWhiteSpace(url) && !imageUrlList.Contains(url))
+                {
+                    imageUrlList.Add(url.Trim());
+                }
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ImageUrl) && !imageUrlList.Contains(request.ImageUrl.Trim()))
+        {
+            imageUrlList.Insert(0, request.ImageUrl.Trim());
+        }
+
+        if (string.IsNullOrWhiteSpace(mainImageUrl) && imageUrlList.Count > 0)
+        {
+            mainImageUrl = imageUrlList[0];
+        }
+
         var product = new Product
         {
             SellerId = request.SellerId,
             CategoryId = request.CategoryId,
+            SubcategoryId = request.SubcategoryId,
+            Size = request.Size,
             Title = title,
             Slug = slug,
             Description = request.Description.Trim(),
             Price = request.Price,
             Condition = condition,
-            Status = ProductStatus.Published,
-            ImageUrl = request.ImageUrl,
+            Status = ProductStatus.Pending,
+            ImageUrl = mainImageUrl,
             CreatedAtUtc = DateTime.UtcNow,
-            IsApproved = true
+            IsApproved = false
         };
+
+        for (int i = 0; i < imageUrlList.Count; i++)
+        {
+            var imgUrl = imageUrlList[i];
+            var isMain = i == 0;
+            var productImage = new ProductImage
+            {
+                ProductId = product.Id,
+                ImageUrl = imgUrl,
+                IsMain = isMain,
+                DisplayOrder = i,
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            product.Images.Add(productImage);
+            _context.ProductImages.Add(productImage);
+        }
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync(cancellationToken);

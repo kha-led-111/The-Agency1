@@ -17,7 +17,8 @@ public class LocalImageStorageService : IImageStorageService
 
     public async Task<string> SaveImageAsync(Stream stream, string fileName, string contentType, CancellationToken cancellationToken = default)
     {
-        var uploadsFolder = Path.Combine(_environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "uploads");
+        var webRoot = _environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var uploadsFolder = Path.Combine(webRoot, "uploads", "products");
         if (!Directory.Exists(uploadsFolder))
         {
             Directory.CreateDirectory(uploadsFolder);
@@ -29,6 +30,6 @@ public class LocalImageStorageService : IImageStorageService
             await stream.CopyToAsync(fileStream, cancellationToken);
         }
 
-        return $"/uploads/{fileName}";
+        return $"/uploads/products/{fileName}";
     }
 }

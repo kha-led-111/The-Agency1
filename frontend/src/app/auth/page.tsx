@@ -1,94 +1,116 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { setStoredRole } from "@/lib/auth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login: authLogin, refreshUser } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
+    setFieldErrors({});
 
     try {
       if (mode === "register") {
+        const payload = {
+          email: email.trim(),
+          password: password,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phoneNumber: phone.trim() || "+20 100 000 0000",
+        };
+
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email || "user@elwkalla.com",
-            password: password || "Password123!",
-            firstName: firstName || "أمينة",
-            lastName: lastName || "فاروق",
-            phoneNumber: phone || "+20 100 123 4567",
-          }),
+          credentials: "include",
+          body: JSON.stringify(payload),
         });
 
         if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          if (data.accessToken) {
-            localStorage.setItem("token", data.accessToken);
+          await refreshUser();
+          const redirectTarget = searchParams.get("returnUrl") || searchParams.get("redirect") || (typeof window !== "undefined" ? localStorage.getItem("redirect_after_login") : null);
+          if (redirectTarget) {
+            await authLogin(payload.email, payload.password);
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("redirect_after_login");
+            }
+            router.push(redirectTarget);
+            return;
           }
-          setRegisteredEmail(email || "user@elwkalla.com");
+          setRegisteredEmail(payload.email);
         } else {
-          setRegisteredEmail(email || "user@elwkalla.com");
+          const errData = await res.json().catch(() => ({}));
+          const extractedErrors: Record<string, string> = {};
+
+          if (errData.errors && typeof errData.errors === "object") {
+            Object.keys(errData.errors).forEach((key) => {
+              const messages = errData.errors[key];
+              const msg = Array.isArray(messages) ? messages.join(" ") : String(messages);
+              if (key.toLowerCase().includes("email")) {
+                extractedErrors.email = "يرجى إدخال بريد إلكتروني صحيح وغير مسجل سابقاً.";
+              } else if (key.toLowerCase().includes("password")) {
+                extractedErrors.password = "كلمة المرور غير مطابقة للشروط: 8 أحرف على الأقل، حرف كبير، رقم، ورمز خاص.";
+              } else if (key.toLowerCase().includes("firstname")) {
+                extractedErrors.firstName = "الاسم الأول مطلوب (100 حرف كأقصى حد).";
+              } else if (key.toLowerCase().includes("lastname")) {
+                extractedErrors.lastName = "الاسم الأخير مطلوب (100 حرف كأقصى حد).";
+              } else {
+                extractedErrors[key] = msg;
+              }
+            });
+          }
+
+          setFieldErrors(extractedErrors);
+          setErrorMessage(
+            errData.detail || errData.title || errData.message || "فشلت عملية التسجيل. يرجى مراجعة الحقول الحمراء أدناه."
+          );
         }
       } else {
-        const targetEmail = (email || "khaledgmal644@gmail.com").toLowerCase().trim();
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: targetEmail,
-            password: password || "weka556677@#$",
-          }),
-        });
+        const targetEmail = email.toLowerCase().trim();
+        const targetPassword = password;
 
-        const isAdminEmail = targetEmail === "khaledgmal644@gmail.com" || targetEmail === "alihesen1967@gmail.com";
+        const result = await authLogin(targetEmail, targetPassword);
+        if (result.success) {
+          const isAdmin =
+            result.user?.role === "Admin" ||
+            targetEmail === "khaledgmal644@gmail.com" ||
+            targetEmail === "alihesen1967@gmail.com";
 
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          if (data.accessToken) {
-            localStorage.setItem("token", data.accessToken);
-          }
-          if (data.user?.role === "Admin" || isAdminEmail) {
-            setStoredRole("مسؤول");
+          const redirectTarget = searchParams.get("returnUrl") || searchParams.get("redirect") || (typeof window !== "undefined" ? localStorage.getItem("redirect_after_login") : null);
+          if (redirectTarget) {
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("redirect_after_login");
+            }
+            router.push(redirectTarget);
           } else {
-            setStoredRole("مشتري");
+            router.push(isAdmin ? "/admin" : "/profile");
           }
-          router.push(isAdminEmail ? "/admin" : "/profile");
         } else {
-          if (isAdminEmail) {
-            setStoredRole("مسؤول");
-          } else {
-            setStoredRole("مشتري");
-          }
-          router.push(isAdminEmail ? "/admin" : "/profile");
+          setErrorMessage(result.error || "فشل تسجيل الدخول. يرجى التأكد من كلمة المرور والبريد.");
         }
       }
     } catch {
-      const targetEmail = (email || "khaledgmal644@gmail.com").toLowerCase().trim();
-      const isAdminEmail = targetEmail === "khaledgmal644@gmail.com" || targetEmail === "alihesen1967@gmail.com";
-      if (mode === "register") {
-        setRegisteredEmail(email || "user@elwkalla.com");
-      } else {
-        if (isAdminEmail) {
-          setStoredRole("مسؤول");
-        } else {
-          setStoredRole("مشتري");
-        }
-        router.push(isAdminEmail ? "/admin" : "/profile");
-      }
+      setErrorMessage("تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً.");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,6 +159,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setMode("login");
                   setRegisteredEmail(null);
+                  setErrorMessage(null);
+                  setFieldErrors({});
                 }}
                 className={`flex-1 rounded-full px-4 py-2.5 text-sm font-bold transition ${
                   mode === "login" ? "bg-stone-900 text-white shadow-sm" : "text-stone-600 hover:text-stone-900"
@@ -149,6 +173,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setMode("register");
                   setRegisteredEmail(null);
+                  setErrorMessage(null);
+                  setFieldErrors({});
                 }}
                 className={`flex-1 rounded-full px-4 py-2.5 text-sm font-bold transition ${
                   mode === "register" ? "bg-stone-900 text-white shadow-sm" : "text-stone-600 hover:text-stone-900"
@@ -180,73 +206,118 @@ export default function AuthPage() {
               </div>
             )}
 
+            {errorMessage && (
+              <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs sm:text-sm font-bold text-rose-800">
+                ⚠️ {errorMessage}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               {mode === "register" && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm text-stone-700">
-                    <span className="mb-2 block font-bold">الاسم الأول</span>
+                    <span className="mb-2 block font-bold">الاسم الأول *</span>
                     <input
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="مثال: أمينة"
-                      className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-1 focus:ring-stone-400 font-medium"
+                      className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm outline-none transition font-medium ${
+                        fieldErrors.firstName ? "border-rose-400 focus:border-rose-500 ring-1 ring-rose-400" : "border-stone-200 focus:border-stone-400 focus:ring-1 focus:ring-stone-400"
+                      }`}
                     />
+                    {fieldErrors.firstName && <p className="mt-1 text-xs font-bold text-rose-600">{fieldErrors.firstName}</p>}
                   </label>
                   <label className="block text-sm text-stone-700">
-                    <span className="mb-2 block font-bold">الاسم الأخير</span>
+                    <span className="mb-2 block font-bold">الاسم الأخير *</span>
                     <input
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="مثال: فاروق"
-                      className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-1 focus:ring-stone-400 font-medium"
+                      className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm outline-none transition font-medium ${
+                        fieldErrors.lastName ? "border-rose-400 focus:border-rose-500 ring-1 ring-rose-400" : "border-stone-200 focus:border-stone-400 focus:ring-1 focus:ring-stone-400"
+                      }`}
                     />
+                    {fieldErrors.lastName && <p className="mt-1 text-xs font-bold text-rose-600">{fieldErrors.lastName}</p>}
                   </label>
                 </div>
               )}
 
               <label className="block text-sm text-stone-700">
-                <span className="mb-2 block font-bold">البريد الإلكتروني</span>
+                <span className="mb-2 block font-bold">البريد الإلكتروني *</span>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-1 focus:ring-stone-400 font-medium"
+                  className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm outline-none transition font-medium ${
+                    fieldErrors.email ? "border-rose-400 focus:border-rose-500 ring-1 ring-rose-400" : "border-stone-200 focus:border-stone-400 focus:ring-1 focus:ring-stone-400"
+                  }`}
                 />
+                {fieldErrors.email && <p className="mt-1 text-xs font-bold text-rose-600">{fieldErrors.email}</p>}
               </label>
 
               <label className="block text-sm text-stone-700">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-bold">كلمة المرور</span>
+                  <span className="font-bold">كلمة المرور *</span>
                   {mode === "login" && (
                     <Link href="/auth/forgot-password" className="text-xs font-bold text-amber-700 hover:underline">
                       نسيت كلمة المرور؟
                     </Link>
                   )}
                 </div>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-1 focus:ring-stone-400 font-medium"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full rounded-2xl border bg-white pl-11 pr-4 py-3 text-sm outline-none transition font-medium ${
+                      fieldErrors.password ? "border-rose-400 focus:border-rose-500 ring-1 ring-rose-400" : "border-stone-200 focus:border-stone-400 focus:ring-1 focus:ring-stone-400"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition"
+                  >
+                    {showPassword ? (
+                      /* EyeOff Icon */
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.88 9.88a3 3 0 104.24 4.24M10.73 5.08A10.43 10.43 0 0112 5c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 01-3.09-3.09M3 3l18 18" />
+                      </svg>
+                    ) : (
+                      /* Eye Icon */
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.password ? (
+                  <p className="mt-1 text-xs font-bold text-rose-600">{fieldErrors.password}</p>
+                ) : mode === "register" ? (
+                  <p className="mt-1.5 text-[11px] font-medium text-stone-500">
+                    💡 يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل، تتضمن حرفًا كبيرًا، ورقمًا، ورمزًا خاصًا (!@#$%).
+                  </p>
+                ) : null}
               </label>
 
               {mode === "register" && (
                 <label className="block text-sm text-stone-700">
-                  <span className="mb-2 block font-bold">رقم الهاتف</span>
+                  <span className="mb-2 block font-bold">رقم الهاتف *</span>
                   <input
                     type="tel"
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+20 100 123 4567"
-                    className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-1 focus:ring-stone-400 font-medium"
+                    className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-1 focus:ring-stone-400 font-medium dir-ltr text-right"
                   />
                 </label>
               )}
@@ -254,13 +325,13 @@ export default function AuthPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-2xl bg-stone-900 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-stone-800 disabled:opacity-50 shadow-sm"
+                className="w-full rounded-2xl bg-stone-900 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-stone-800 disabled:opacity-50 shadow-sm mt-2"
               >
                 {isSubmitting
                   ? "جاري المعالجة..."
                   : mode === "login"
-                  ? "تسجيل الدخول إلى حسابك"
-                  : "إنشاء حساب جديد"}
+                    ? "تسجيل الدخول إلى حسابك"
+                    : "إنشاء حساب جديد"}
               </button>
             </form>
           </div>
@@ -273,6 +344,8 @@ export default function AuthPage() {
               onClick={() => {
                 setMode(mode === "login" ? "register" : "login");
                 setRegisteredEmail(null);
+                setErrorMessage(null);
+                setFieldErrors({});
               }}
             >
               {mode === "login" ? "إنشاء حساب الان" : "تسجيل الدخول"}
@@ -284,3 +357,10 @@ export default function AuthPage() {
   );
 }
 
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-stone-500 font-medium">جاري التحميل...</div>}>
+      <AuthContent />
+    </Suspense>
+  );
+}

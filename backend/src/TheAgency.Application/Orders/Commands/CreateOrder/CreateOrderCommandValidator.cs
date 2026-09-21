@@ -11,9 +11,11 @@ public sealed class CreateOrderCommandValidator : AbstractValidator<CreateOrderC
         RuleFor(x => x.ProductIds).NotEmpty().WithMessage("At least one product must be selected for checkout.");
         RuleFor(x => x.ShippingAddress)
             .NotEmpty()
-            .Length(5, 500)
-            .Must(AllowedCities.IsCityAllowed)
-            .WithMessage("Shipping address must be within one of the supported cities: المحلة الكبرى, طنطا, شبين الكوم, المنصورة.");
+            .Length(5, 500);
+
+        RuleFor(x => x)
+            .Must(x => AllowedCities.IsLocationAllowed(x.Governorate, x.City, x.ShippingAddress))
+            .WithMessage(AllowedCities.UnsupportedErrorMessage);
     }
 }
 

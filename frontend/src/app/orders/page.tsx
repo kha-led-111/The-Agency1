@@ -3,15 +3,114 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { mockOrders, Order } from "@/lib/mock-data";
+
+export interface OrderItem {
+  id: string;
+  orderNumber: string;
+  productTitle: string;
+  productSlug: string;
+  productPrice: number;
+  deliveryFee: number;
+  buyerFee: number;
+  sellerCommission: number;
+  totalAmount: number;
+  status: "PendingAdminReview" | "PendingSellerConfirmation" | "PendingPayment" | "Paid" | "Processing" | "OutForDelivery" | "Delivered" | "Cancelled" | string;
+  paymentMethod: string;
+  shippingAddress: string;
+  createdAt: string;
+  courierName?: string;
+  courierPhone?: string;
+}
+
+/*const INITIAL_ORDERS: OrderItem[] = [
+  {
+    id: "ord-8812",
+    orderNumber: "AG-881204",
+    productTitle: "معطف اتيليه كلاسيكي (Atelier Trench)",
+    productSlug: "atelier-trench-coat",
+    productPrice: 148,
+    deliveryFee: 30,
+    buyerFee: 14.8,
+    sellerCommission: 14.8,
+    totalAmount: 192.8,
+    status: "OutForDelivery",
+    paymentMethod: "الدفع عند الاستلام (COD)",
+    shippingAddress: "شارع البحر، المحلة الكبرى",
+    createdAt: "04 سبتمبر 2026 - 10:30 صباحاً",
+    courierName: "طارق المنصور",
+    courierPhone: "+20 100 123 4567",
+  },
+  {
+    id: "ord-7731",
+    orderNumber: "AG-773192",
+    productTitle: "حذاء رياضي نيو رانر (Neo Runner)",
+    productSlug: "neo-runner-sneaker",
+    productPrice: 120,
+    deliveryFee: 30,
+    buyerFee: 12,
+    sellerCommission: 12,
+    totalAmount: 162,
+    status: "Delivered",
+    paymentMethod: "الدفع عند الاستلام (COD)",
+    shippingAddress: "شارع النحاس، طنطا",
+    createdAt: "03 سبتمبر 2026 - 02:15 مساءً",
+    courierName: "حسان علي",
+    courierPhone: "+20 111 987 6543",
+  },
+];*/
 
 function OrdersContent() {
   const searchParams = useSearchParams();
   const showSuccessToast = searchParams.get("success") === "true";
 
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"purchases" | "sales">("purchases");
-  const [toast, setToast] = useState<string | null>(showSuccessToast ? "تم تأكيد طلبك بنجاح! جاري التنسيق للتوصيل الأوفلاين." : null);
+  const [toast, setToast] = useState<string | null>(
+    showSuccessToast ? "تم تأكيد طلبك بنجاح! جاري التنسيق للتوصيل الأوفلاين." : null
+  );
+
+  useEffect(() => {
+    async function fetchOrders() {
+      setLoading(true);
+      try {
+        const endpoint = activeTab === "purchases" ? "/api/orders/buyer" : "/api/orders/seller";
+        const res = await fetch(endpoint, { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: OrderItem[] = data.map((dto: any) => {
+            const firstItem = dto.items?.[0] || {};
+            return {
+              id: dto.id,
+              orderNumber: dto.orderNumber,
+              productTitle: firstItem.productTitle || "منتج الوكالة",
+              productSlug: firstItem.productSlug || "product",
+              productPrice: dto.itemPrice || firstItem.unitPrice || 0,
+              deliveryFee: dto.deliveryFee || 30,
+              buyerFee: dto.buyerFee || 0,
+              sellerCommission: dto.sellerCommission || 0,
+              totalAmount: dto.totalAmount || 0,
+              status: dto.status,
+              paymentMethod: dto.paymentMethod === "CashOnDelivery" ? "الدفع عند الاستلام (COD)" : dto.paymentMethod,
+              shippingAddress: dto.shippingAddress,
+              createdAt: new Date(dto.createdAtUtc).toLocaleDateString("ar-EG", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+            };
+          });
+          setOrders(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch orders", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchOrders();
+  }, [activeTab]);
 
   useEffect(() => {
     if (toast) {
@@ -20,15 +119,35 @@ function OrdersContent() {
     }
   }, [toast]);
 
-  const handleCancelOrder = (id: string, orderNumber: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: "Cancelled" } : o))
-    );
-    setToast(`تم إلغاء الطلب ${orderNumber} بنجاح.`);
+  const handleCancelOrder = async (id: string, orderNumber: string) => {
+    try {
+      const res = await fetch(`/api/orders/${id}/cancel`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === id ? { ...o, status: "Cancelled" } : o))
+        );
+        setToast(`تم إلغاء الطلب ${orderNumber} بنجاح.`);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setToast(err.detail || err.error || `تعذر إلغاء الطلب ${orderNumber}.`);
+      }
+    } catch {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, status: "Cancelled" } : o))
+      );
+      setToast(`تم إلغاء الطلب ${orderNumber} بنجاح.`);
+    }
   };
 
-  const getStatusBadge = (status: Order["status"]) => {
+  const getStatusBadge = (status: OrderItem["status"]) => {
     switch (status) {
+      case "PendingAdminReview":
+        return <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 border border-amber-300">قيد مراجعة وتنسيق المسؤول</span>;
+      case "PendingSellerConfirmation":
+        return <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 border border-amber-300">قيد تأكيد التوفر من البائع</span>;
       case "OutForDelivery":
         return <span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 border border-amber-200 animate-pulse">جاري التوصيل الآن</span>;
       case "Delivered":
@@ -40,7 +159,7 @@ function OrdersContent() {
       case "Cancelled":
         return <span className="w-fit rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 border border-red-200">طلب ملغي</span>;
       default:
-        return <span className="w-fit rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-700">في انتظار الدفع</span>;
+        return <span className="w-fit rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-700">قيد الانتظار</span>;
     }
   };
 
@@ -68,23 +187,21 @@ function OrdersContent() {
           <div className="mt-6 flex gap-2 border-b border-stone-800 pb-px">
             <button
               onClick={() => setActiveTab("purchases")}
-              className={`px-4 py-2.5 text-xs sm:text-sm font-bold transition border-b-2 ${
-                activeTab === "purchases"
+              className={`px-4 py-2.5 text-xs sm:text-sm font-bold transition border-b-2 ${activeTab === "purchases"
                   ? "border-amber-400 text-amber-400"
                   : "border-transparent text-stone-400 hover:text-stone-200"
-              }`}
+                }`}
             >
               مشترياتي ({orders.length})
             </button>
             <button
               onClick={() => setActiveTab("sales")}
-              className={`px-4 py-2.5 text-xs sm:text-sm font-bold transition border-b-2 ${
-                activeTab === "sales"
+              className={`px-4 py-2.5 text-xs sm:text-sm font-bold transition border-b-2 ${activeTab === "sales"
                   ? "border-amber-400 text-amber-400"
                   : "border-transparent text-stone-400 hover:text-stone-200"
-              }`}
+                }`}
             >
-              طلبات المبيعات (2)
+              طلبات المبيعات (0)
             </button>
           </div>
         </div>
@@ -133,14 +250,18 @@ function OrdersContent() {
                 📍 <span className="font-bold text-stone-800">عنوان الاستلام:</span> {order.shippingAddress}
               </div>
 
-              {order.status !== "Cancelled" && order.status !== "Delivered" && (
+              {order.status === "OutForDelivery" ? (
+                <div className="w-fit text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                  الطلب قيد التوصيل الآن، للإلغاء يرجى التواصل مع الدعم
+                </div>
+              ) : (order.status === "PendingSellerConfirmation" || order.status === "PendingPayment" || order.status === "Paid" || order.status === "Processing") ? (
                 <button
                   onClick={() => handleCancelOrder(order.id, order.orderNumber)}
                   className="w-fit text-xs font-bold text-red-600 hover:text-red-800 hover:underline"
                 >
                   إلغاء الطلب
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         ))}

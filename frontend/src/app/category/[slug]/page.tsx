@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
-import { categories, products } from "@/lib/mock-data";
+import { getImageUrl } from "@/lib/api";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -10,41 +10,85 @@ type CategoryPageProps = {
   }>;
 };
 
+interface ProductDto {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  price: number;
+  condition: string;
+  categoryId: string;
+  categoryName?: string;
+  imageUrl?: string;
+}
+
+interface CategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
+
 export default function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = use(params);
   const decodedSlug = decodeURIComponent(slug);
 
-  // Find category by slug or name
-  const category = categories.find(
-    (c) => c.slug === decodedSlug || c.name === decodedSlug || c.slug.toLowerCase() === decodedSlug.toLowerCase()
-  ) || categories.find((c) => c.slug === "kids") || categories[0];
-
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("all");
+  const [category, setCategory] = useState<CategoryDto | null>(null);
+  const [products, setProducts] = useState<ProductDto[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc" | "rating">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">("newest");
 
-  // Filter products by category name
-  const categoryProducts = products.filter((p) => p.category === category.name);
+  useEffect(() => {
+    async function fetchCategoryData() {
+      try {
+        const catRes = await fetch("/api/marketplace/categories");
+        if (catRes.ok) {
+          const categories: CategoryDto[] = await catRes.json();
+          const matched = categories.find(
+            (c) => c.slug.toLowerCase() === decodedSlug.toLowerCase() || c.name === decodedSlug
+          ) || categories[0];
 
-  // Filter by subcategory and search
-  const filteredProducts = categoryProducts.filter((p) => {
-    const matchesSubcategory =
-      selectedSubcategory === "all" || p.subcategory === selectedSubcategory;
-    const matchesSearch =
-      !searchQuery.trim() ||
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase());
+          if (matched) {
+            setCategory(matched);
+            const prodRes = await fetch(`/api/marketplace?categoryId=${matched.id}&pageSize=50`);
+            if (prodRes.ok) {
+              const prodData = await prodRes.json();
+              setProducts(prodData.items || prodData || []);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load category data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    return matchesSubcategory && matchesSearch;
+    fetchCategoryData();
+  }, [decodedSlug]);
+
+  const filteredProducts = products.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
   });
 
-  // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === "price-asc") return a.price - b.price;
     if (sortBy === "price-desc") return b.price - a.price;
-    if (sortBy === "rating") return b.rating - a.rating;
-    return b.id - a.id;
+    return 0;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-stone-500 font-bold text-sm">
+        جاري تحميل منتجات الفئة...
+      </div>
+    );
+  }
+
+  const categoryName = category?.name || decodedSlug;
 
   return (
     <main className="space-y-6 sm:space-y-8" dir="rtl">
@@ -58,71 +102,28 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           الفئات
         </Link>
         <span>/</span>
-        <span className="text-stone-900 font-bold">{category.name}</span>
+        <span className="text-stone-900 font-bold">{categoryName}</span>
       </nav>
 
       {/* Hero Banner */}
-      <section className="relative overflow-hidden rounded-3xl border border-stone-200 bg-white p-6 sm:p-10 shadow-sm">
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-center">
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-full bg-amber-400/20 px-3 py-1 text-xs font-bold text-amber-900">
-                فئة متميزة
-              </span>
-              <span className="inline-flex rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-700">
-                {categoryProducts.length > 0 ? categoryProducts.length : category.items} قطعة متاحة
-              </span>
-            </div>
-
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl text-stone-900">
-              {category.name}
-            </h1>
-
-            <p className="text-sm leading-6 sm:text-base sm:leading-7 text-stone-600 font-medium max-w-xl">
-              {category.description}
-            </p>
-
-            {/* Subcategory Pill Badges */}
-            {category.subcategories && category.subcategories.length > 0 && (
-              <div className="pt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSubcategory("all")}
-                  className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                    selectedSubcategory === "all"
-                      ? "bg-stone-900 text-white shadow-sm"
-                      : "bg-stone-100 text-stone-700 hover:bg-stone-200"
-                  }`}
-                >
-                  عرض جميع الأقسام
-                </button>
-                {category.subcategories.map((sub) => (
-                  <button
-                    key={sub.slug}
-                    type="button"
-                    onClick={() => setSelectedSubcategory(sub.name)}
-                    className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                      selectedSubcategory === sub.name
-                        ? "bg-stone-900 text-white shadow-sm"
-                        : "bg-stone-100 text-stone-700 hover:bg-stone-200"
-                    }`}
-                  >
-                    {sub.name}
-                  </button>
-                ))}
-              </div>
-            )}
+      <section className="relative overflow-hidden rounded-3xl border border-stone-200 bg-stone-900 text-white p-6 sm:p-10 shadow-sm">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex rounded-full bg-amber-400/20 px-3 py-1 text-xs font-bold text-amber-300 border border-amber-400/30">
+              فئة معتمدة
+            </span>
+            <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-stone-200">
+              {products.length} قطعة متاحة
+            </span>
           </div>
 
-          {/* Banner Graphic Image */}
-          <div className="relative h-52 sm:h-64 lg:h-72 w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 shadow-inner">
-            <img
-              src={category.imageUrl}
-              alt={category.name}
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          </div>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl text-white">
+            {categoryName}
+          </h1>
+
+          <p className="text-sm leading-6 sm:text-base sm:leading-7 text-stone-300 font-medium max-w-xl">
+            {category?.description || "تصفح أفضل المعروضات الحصرية والمنتجات المستعملة بحالة كالجديدة."}
+          </p>
         </div>
       </section>
 
@@ -134,7 +135,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={`ابحث في فئة ${category.name}...`}
+            placeholder={`ابحث في فئة ${categoryName}...`}
             className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-xs sm:text-sm outline-none transition focus:border-stone-400 focus:bg-white font-medium"
           />
         </div>
@@ -150,7 +151,6 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <option value="newest">الأحدث وصولاً</option>
             <option value="price-asc">السعر: من الأقل للأعلى</option>
             <option value="price-desc">السعر: من الأعلى للأقل</option>
-            <option value="rating">الأعلى تقييماً</option>
           </select>
         </div>
       </section>
@@ -164,27 +164,40 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               href={`/product/${product.slug}`}
               className="group overflow-hidden rounded-2xl sm:rounded-3xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md flex flex-col"
             >
-              <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-stone-100">
-                <img
-                  src={product.imageUrl}
-                  alt={product.title}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
+              <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-stone-100 flex items-center justify-center">
+                {product.imageUrl ? (
+                  <img
+                    src={getImageUrl(product.imageUrl)}
+                    alt={product.title}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector(".img-fallback") as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }
+                    }}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : null}
+                <div
+                  className="img-fallback flex flex-col items-center justify-center text-stone-400 p-4 text-center"
+                  style={{ display: product.imageUrl ? "none" : "flex" }}
+                >
+                  <span className="text-3xl mb-1">📷</span>
+                  <span className="text-[11px] font-bold">لا توجد صورة</span>
+                </div>
               </div>
               <div className="space-y-2.5 p-4 sm:p-5 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold text-stone-700">
-                      {product.badge}
+                      {product.condition || "ممتاز"}
                     </span>
                     <span className="text-lg sm:text-xl font-bold text-stone-900">{product.price} ج.م</span>
                   </div>
-                  <p className="text-[11px] sm:text-xs font-semibold text-stone-500">{product.subcategory || product.category}</p>
+                  <p className="text-[11px] sm:text-xs font-semibold text-stone-500">{product.categoryName || categoryName}</p>
                   <h3 className="mt-0.5 text-base sm:text-lg font-bold text-stone-900 truncate">{product.title}</h3>
-                </div>
-                <div className="flex items-center justify-between text-xs text-stone-500 font-medium pt-2 border-t border-stone-100">
-                  <span>📍 {product.location}</span>
-                  <span className="font-bold text-amber-600">★ {product.rating} ({product.reviews})</span>
                 </div>
               </div>
             </Link>
@@ -197,14 +210,11 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           </div>
           <h2 className="mt-4 text-xl font-bold text-stone-900">لا توجد منتجات مطابقة لخيارات الفلترة</h2>
           <p className="mt-2 text-xs sm:text-sm text-stone-600 font-medium">
-            جرب اختيار قسم فرعي آخر أو البحث عن مصطلح مختلف في فئة {category.name}.
+            جرب اختيار مصطلح مختلف في فئة {categoryName}.
           </p>
           <button
             type="button"
-            onClick={() => {
-              setSelectedSubcategory("all");
-              setSearchQuery("");
-            }}
+            onClick={() => setSearchQuery("")}
             className="mt-5 rounded-2xl bg-stone-900 px-6 py-2.5 text-xs font-bold text-white transition hover:bg-stone-800"
           >
             إعادة ضبط الفلاتر

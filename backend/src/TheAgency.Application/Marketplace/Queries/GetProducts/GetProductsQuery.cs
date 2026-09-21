@@ -9,9 +9,11 @@ namespace TheAgency.Application.Marketplace.Queries.GetProducts;
 public sealed record GetProductsQuery(
     string? Search = null,
     Guid? CategoryId = null,
+    Guid? SubcategoryId = null,
     decimal? MinPrice = null,
     decimal? MaxPrice = null,
     ProductCondition? Condition = null,
+    string? Size = null,
     string? SortBy = null,
     int PageNumber = 1,
     int PageSize = 12

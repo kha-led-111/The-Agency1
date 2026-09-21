@@ -45,25 +45,36 @@ public sealed class ProcessReturnOrderCommandHandler : IRequestHandler<ProcessRe
             throw new UnauthorizedException("You do not have permission to request a return for this order.");
         }
 
-        var returnFinancials = CommissionFeeCalculator.CalculateReturnFinancials(order.ItemPrice, order.TotalAmount);
-
-        order.ReturnFee = returnFinancials.FixedReturnFee;
-        order.ReturnPercentageFee = returnFinancials.ReturnPercentageFee;
-        order.Status = OrderStatus.Cancelled;
+        order.ReturnFee = 20.00m;
+        order.Status = OrderStatus.Returned;
         order.UpdatedAtUtc = DateTime.UtcNow;
 
         foreach (var item in order.OrderItems)
         {
             if (item.Product is not null)
             {
-                item.Product.Status = ProductStatus.Published;
+                item.Product.Status = item.Product.IsApproved ? ProductStatus.Published : ProductStatus.Pending;
                 item.Product.BuyerId = null;
                 item.Product.UpdatedAtUtc = DateTime.UtcNow;
             }
         }
 
         var sellerId = order.OrderItems.FirstOrDefault()?.Product?.SellerId ?? order.BuyerId;
-        await _paymentProvider.ProcessReturnFeeDeductionAsync(order, sellerId, returnFinancials.FixedReturnFee, cancellationToken);
+        await _paymentProvider.ProcessFullReturnSettlementAsync(order, order.BuyerId, sellerId, order.DeliveryAgentId, 20.00m, cancellationToken);
+
+        var adminUsers = await _context.Users.Where(u => u.Role == UserRole.Admin).ToListAsync(cancellationToken);
+        foreach (var admin in adminUsers)
+        {
+            _context.Notifications.Add(new TheAgency.Domain.Entities.Notification
+            {
+                UserId = admin.Id,
+                Title = $"مرتجع جديد: الطلب #{order.OrderNumber}",
+                Message = $"تم إرجاع الطلب #{order.OrderNumber}. تم خصم 20 ج.م رسوم إرجاع وشحن من المشتري والبائع وإضافتها لرصيد المندوب.",
+                Type = NotificationType.InApp,
+                Status = NotificationStatus.Unread,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
         return OrderDto.From(order);

@@ -51,10 +51,17 @@ public class OfflinePaymentIntegrationTests : IClassFixture<AgencyWebApplication
             title = $"Offline Payment Test Item {Guid.NewGuid():N}",
             description = "Item to test offline COD settlement and ledger integration.",
             price = 400.00m,
-            condition = "New"
+            condition = "New",
+            imageUrl = "/uploads/test.jpg",
+            imageUrls = new[] { "/uploads/test1.jpg", "/uploads/test2.jpg" },
+            governorate = "الغربية",
+            city = "طنطا"
         });
         createProdResponse.EnsureSuccessStatusCode();
         var product = (await createProdResponse.Content.ReadFromJsonAsync<ProductDto>())!;
+
+        var adminClient = _factory.CreateClient();
+        await adminClient.ApproveProductAsync(product.Id);
 
         // 2. Buyer Checkout -> Order created
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new

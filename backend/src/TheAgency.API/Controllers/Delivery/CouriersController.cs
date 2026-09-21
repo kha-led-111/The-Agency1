@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 using TheAgency.Application.Delivery.Commands.OnboardCourier;
 using TheAgency.Application.Delivery.Commands.UpdateAvailability;
 using TheAgency.Application.Delivery.Common;
+using TheAgency.Application.Delivery.Queries.GetCourierMyOrders;
 using TheAgency.Application.Delivery.Queries.GetCourierProfile;
+using TheAgency.Application.Orders.Common;
 
 namespace TheAgency.API.Controllers.Delivery;
 
@@ -33,6 +36,18 @@ public class CouriersController : ControllerBase
             throw new UnauthorizedAccessException("User is not authenticated.");
         }
         return userId;
+    }
+
+    [HttpGet("my-orders")]
+    [HttpGet("/api/courier/my-orders")]
+    [HttpGet("/api/courier/orders/assigned")]
+    [HttpGet("orders/assigned")]
+    [ProducesResponseType(typeof(IReadOnlyList<OrderDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyAssignedOrders(CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        var orders = await _sender.Send(new GetCourierMyOrdersQuery(userId), cancellationToken);
+        return Ok(orders);
     }
 
     [HttpPost("onboard")]

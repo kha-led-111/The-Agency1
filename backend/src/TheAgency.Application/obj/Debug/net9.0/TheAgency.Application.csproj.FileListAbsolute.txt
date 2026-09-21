@@ -13,3 +13,4 @@ D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.App
 D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\refint\TheAgency.Application.dll
 D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.pdb
 D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\ref\TheAgency.Application.dll
+D:\web\elwkalla\backend\src\TheAgency.Application\obj\Debug\net9.0\TheAgency.Application.sourcelink.json

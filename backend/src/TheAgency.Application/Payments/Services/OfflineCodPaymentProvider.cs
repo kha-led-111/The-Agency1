@@ -129,4 +129,79 @@ public class OfflineCodPaymentProvider : IPaymentProvider
 
         return PaymentTransactionDto.From(returnFeeTx);
     }
+
+    public async Task<PaymentTransactionDto> ProcessFullReturnSettlementAsync(
+        Order order,
+        Guid buyerId,
+        Guid sellerId,
+        Guid? courierId,
+        decimal returnFee = 20.00m,
+        CancellationToken cancellationToken = default)
+    {
+        var buyerLedger = await GetOrCreateLedgerAsync(buyerId, cancellationToken);
+        var sellerLedger = await GetOrCreateLedgerAsync(sellerId, cancellationToken);
+
+        // 1. Charge 20 EGP return fee penalty to Buyer
+        buyerLedger.AvailableBalance -= returnFee;
+        buyerLedger.TotalFeesPaid += returnFee;
+        buyerLedger.UpdatedAtUtc = DateTime.UtcNow;
+
+        var buyerTx = new PaymentTransaction
+        {
+            OrderId = order.Id,
+            UserId = buyerId,
+            Amount = returnFee,
+            Type = TransactionType.BuyerReturnFeeDeduction,
+            Status = TransactionStatus.Completed,
+            PaymentMethod = PaymentMethod.CashOnDelivery,
+            TransactionRef = $"BUYER-RET-{order.OrderNumber}-{Guid.NewGuid():N}"[..24],
+            Description = $"رسوم إرجاع وشحن (20 ج.م) كغرامة رفض الشحنة للطلب #{order.OrderNumber}",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        _context.PaymentTransactions.Add(buyerTx);
+
+        // 2. Deduct 20 EGP return fee from Seller payout balance
+        sellerLedger.AvailableBalance -= returnFee;
+        sellerLedger.TotalFeesPaid += returnFee;
+        sellerLedger.UpdatedAtUtc = DateTime.UtcNow;
+
+        var sellerTx = new PaymentTransaction
+        {
+            OrderId = order.Id,
+            UserId = sellerId,
+            Amount = returnFee,
+            Type = TransactionType.SellerReturnFeeDeduction,
+            Status = TransactionStatus.Completed,
+            PaymentMethod = PaymentMethod.CashOnDelivery,
+            TransactionRef = $"SELLER-RET-{order.OrderNumber}-{Guid.NewGuid():N}"[..24],
+            Description = $"خصم رسوم إرجاع وشحن (20 ج.م) للطلب المرتجع #{order.OrderNumber}",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        _context.PaymentTransactions.Add(sellerTx);
+
+        // 3. Credit Courier wallet with designated return delivery fee (20 EGP)
+        if (courierId.HasValue && courierId.Value != Guid.Empty)
+        {
+            var courierLedger = await GetOrCreateLedgerAsync(courierId.Value, cancellationToken);
+            courierLedger.AvailableBalance += returnFee;
+            courierLedger.TotalEarned += returnFee;
+            courierLedger.UpdatedAtUtc = DateTime.UtcNow;
+
+            var courierTx = new PaymentTransaction
+            {
+                OrderId = order.Id,
+                UserId = courierId.Value,
+                Amount = returnFee,
+                Type = TransactionType.CourierFeePayout,
+                Status = TransactionStatus.Completed,
+                PaymentMethod = PaymentMethod.CashOnDelivery,
+                TransactionRef = $"COURIER-RET-{order.OrderNumber}-{Guid.NewGuid():N}"[..24],
+                Description = $"مكافأة أجر توصيل وإرجاع الشحنة المرتجعة للطلب #{order.OrderNumber}",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            _context.PaymentTransactions.Add(courierTx);
+        }
+
+        return PaymentTransactionDto.From(buyerTx);
+    }
 }

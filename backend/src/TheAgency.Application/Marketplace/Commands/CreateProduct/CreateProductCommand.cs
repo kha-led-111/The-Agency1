@@ -12,5 +12,10 @@ public sealed record CreateProductCommand(
     string Condition,
     Guid CategoryId,
     string? ImageUrl,
-    string? Location = null) : IRequest<ProductDto>;
+    string? Location = null,
+    Guid? SubcategoryId = null,
+    string? Size = null,
+    string? Governorate = null,
+    string? City = null,
+    System.Collections.Generic.IReadOnlyList<string>? ImageUrls = null) : IRequest<ProductDto>;
 

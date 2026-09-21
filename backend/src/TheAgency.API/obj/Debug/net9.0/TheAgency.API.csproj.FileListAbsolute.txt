@@ -165,3 +165,5 @@ D:\web\elwkalla\backend\src\TheAgency.API\bin\Debug\net9.0\Microsoft.IdentityMod
 D:\web\elwkalla\backend\src\TheAgency.API\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
 d:\web\elwkalla\backend\src\TheAgency.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll
 d:\web\elwkalla\backend\src\TheAgency.API\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+D:\web\elwkalla\backend\src\TheAgency.API\obj\Debug\net9.0\TheAgency.API.sourcelink.json
+D:\web\elwkalla\backend\src\TheAgency.API\bin\Debug\net9.0\TheAgency.API.staticwebassets.runtime.json

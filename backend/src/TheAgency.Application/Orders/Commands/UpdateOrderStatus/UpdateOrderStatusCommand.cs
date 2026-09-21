@@ -10,4 +10,4 @@ public sealed record UpdateOrderStatusCommand(
     Guid RequestUserId,
     UserRole UserRole,
     OrderStatus NewStatus
-) : IRequest<OrderDto>;
+) : IRequest<OrderDto>;  

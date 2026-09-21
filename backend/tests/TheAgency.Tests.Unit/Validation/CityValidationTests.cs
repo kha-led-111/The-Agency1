@@ -46,6 +46,28 @@ public class CityValidationTests
         result.Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData("الغربية", "المحلة الكبرى")]
+    [InlineData("الغربية", "طنطا")]
+    [InlineData("المنوفية", "شبين الكوم")]
+    [InlineData("الدقهلية", "المنصورة")]
+    public void IsLocationAllowed_ValidGovernorateAndCity_ShouldReturnTrue(string governorate, string city)
+    {
+        var result = AllowedCities.IsLocationAllowed(governorate, city);
+        result.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("القاهرة", "المعادي")]
+    [InlineData("الجيزة", "طنطا")] // Mismatched governorate
+    [InlineData("الغربية", "المنصورة")] // City belongs to Dakahlia, not Gharbia
+    [InlineData("الإسكندرية", "سموحة")]
+    public void IsLocationAllowed_InvalidGovernorateOrCity_ShouldReturnFalse(string governorate, string city)
+    {
+        var result = AllowedCities.IsLocationAllowed(governorate, city);
+        result.Should().BeFalse();
+    }
+
     [Fact]
     public void CreateOrderCommandValidator_InvalidCity_ShouldFailValidation()
     {
@@ -62,7 +84,7 @@ public class CityValidationTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateOrderCommand.ShippingAddress) && e.ErrorMessage.Contains("supported cities"));
+        result.Errors.Should().Contain(e => e.ErrorMessage == AllowedCities.UnsupportedErrorMessage);
     }
 
     [Fact]
@@ -73,7 +95,9 @@ public class CityValidationTests
         var command = new CreateOrderCommand(
             BuyerId: Guid.NewGuid(),
             ProductIds: new[] { Guid.NewGuid() },
-            ShippingAddress: "شارع البحر، المحلة الكبرى"
+            ShippingAddress: "شارع البحر، المحلة الكبرى",
+            Governorate: "الغربية",
+            City: "المحلة الكبرى"
         );
 
         // Act
@@ -96,7 +120,9 @@ public class CityValidationTests
             Condition: "Excellent",
             CategoryId: Guid.NewGuid(),
             ImageUrl: "https://example.com/image.jpg",
-            Location: "القاهرة - المعادي"
+            Location: "القاهرة - المعادي",
+            Governorate: "القاهرة",
+            City: "المعادي"
         );
 
         // Act
@@ -104,6 +130,6 @@ public class CityValidationTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CreateProductCommand.Location) && e.ErrorMessage.Contains("supported cities"));
+        result.Errors.Should().Contain(e => e.ErrorMessage == AllowedCities.UnsupportedErrorMessage);
     }
 }

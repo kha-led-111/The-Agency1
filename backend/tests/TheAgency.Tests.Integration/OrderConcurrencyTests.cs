@@ -56,10 +56,14 @@ public class OrderConcurrencyTests : IClassFixture<AgencyWebApplicationFactory>
             title = $"Exclusive Rare Item {Guid.NewGuid():N}",
             description = "Only one copy available in marketplace inventory.",
             price = 500.00m,
-            condition = "LikeNew"
+            condition = "LikeNew",
+            imageUrl = "/uploads/test.jpg"
         });
         createResponse.EnsureSuccessStatusCode();
         var product = (await createResponse.Content.ReadFromJsonAsync<ProductDto>())!;
+
+        var adminClient = _factory.CreateClient();
+        await adminClient.ApproveProductAsync(product.Id);
 
         // 3. Rule 9 Concurrency Protection Gate: Launch 10 parallel checkout requests simultaneously
         var responses = new ConcurrentBag<HttpResponseMessage>();

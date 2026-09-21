@@ -42,7 +42,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Authentic
         var normalizedEmail = EmailNormalizer.Normalize(request.Email);
 
         var existingUser = await _context.Users
-            .AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken);
+            .AnyAsync(u => u.NormalizedEmail == normalizedEmail || u.Email.ToLower() == normalizedEmail, cancellationToken);
 
         if (existingUser)
         {

@@ -502,3 +502,5 @@ D:\web\elwkalla\backend\tests\TheAgency.Tests.Integration\bin\Debug\net9.0\Micro
 D:\web\elwkalla\backend\tests\TheAgency.Tests.Integration\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 D:\web\elwkalla\backend\tests\TheAgency.Tests.Integration\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
 D:\web\elwkalla\backend\tests\TheAgency.Tests.Integration\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.InMemory.dll
+D:\web\elwkalla\backend\tests\TheAgency.Tests.Integration\obj\Debug\net9.0\TheAgency.Tests.Integration.sourcelink.json
+D:\web\elwkalla\backend\tests\TheAgency.Tests.Integration\bin\Debug\net9.0\TheAgency.API.staticwebassets.runtime.json

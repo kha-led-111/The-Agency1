@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import { AuthProvider } from "@/lib/auth";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -29,18 +30,20 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
       <body className="min-h-screen bg-stone-50 text-stone-900 font-sans antialiased overflow-x-hidden selection:bg-stone-200">
-        <SiteHeader />
-        <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8 sm:py-8">{children}</div>
-        <footer className="border-t border-stone-200 bg-white">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <p className="text-center sm:text-right">© 2026 منصة الوكالة (El Wkalla). جميع الحقوق محفوظة.</p>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm">
-              <span>الأمان وحماية المشتري</span>
-              <span>شبكة التوصيل السريع</span>
-              <span>الدفع عند الاستلام</span>
+        <AuthProvider>
+          <SiteHeader />
+          <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8 sm:py-8">{children}</div>
+          <footer className="border-t border-stone-200 bg-white">
+            <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+              <p className="text-center sm:text-right">© 2026 منصة الوكالة (El Wkalla). جميع الحقوق محفوظة.</p>
+              <div className="flex flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm">
+                <span>الأمان وحماية المشتري</span>
+                <span>شبكة التوصيل السريع</span>
+                <span>الدفع عند الاستلام</span>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </AuthProvider>
       </body>
     </html>
   );

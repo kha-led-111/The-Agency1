@@ -9,5 +9,7 @@ public sealed record CreateOrderCommand(
     Guid BuyerId,
     IReadOnlyList<Guid> ProductIds,
     string ShippingAddress,
-    string? IdempotencyKey = null
+    string? IdempotencyKey = null,
+    string? Governorate = null,
+    string? City = null
 ) : IRequest<OrderDto>;

@@ -16,6 +16,7 @@ public class User
     public UserRole Role { get; set; } = UserRole.Buyer;
     public DateTime? EmailVerifiedAtUtc { get; set; }
     public bool IsActive { get; set; } = true;
+    public int PenaltyPoints { get; set; } = 0;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAtUtc { get; set; }
 

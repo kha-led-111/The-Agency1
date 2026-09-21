@@ -21,19 +21,35 @@ public sealed class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQue
 
     public async Task<IReadOnlyList<CategoryDto>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
     {
-        var categories = await _context.Categories
+        var allCategories = await _context.Categories
             .AsNoTracking()
+            .Include(c => c.Subcategories)
             .Where(x => x.IsActive)
             .OrderBy(x => x.Name)
-            .Select(c => new
-            {
-                Category = c,
-                ProductCount = c.Products.Count(p => p.Status == ProductStatus.Published && p.IsApproved)
-            })
             .ToListAsync(cancellationToken);
 
-        return categories
-            .Select(x => CategoryDto.From(x.Category, x.ProductCount))
+        var productCounts = await _context.Products
+            .AsNoTracking()
+            .Where(p => p.Status == ProductStatus.Published && p.IsApproved)
+            .GroupBy(p => p.CategoryId)
+            .Select(g => new { CategoryId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CategoryId, x => x.Count, cancellationToken);
+
+        var topLevelCategories = allCategories
+            .Where(c => c.ParentId == null)
+            .Select(c =>
+            {
+                var subDtos = c.Subcategories
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.Name)
+                    .Select(s => CategoryDto.From(s, productCounts.GetValueOrDefault(s.Id, 0)))
+                    .ToList();
+
+                var parentProductCount = productCounts.GetValueOrDefault(c.Id, 0) + subDtos.Sum(s => s.ProductCount);
+                return CategoryDto.From(c, parentProductCount, subDtos);
+            })
             .ToList();
+
+        return topLevelCategories;
     }
 }

@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     DbSet<AccountToken> AccountTokens { get; }
     DbSet<Category> Categories { get; }
     DbSet<Product> Products { get; }
+    DbSet<ProductImage> ProductImages { get; }
     DbSet<Favorite> Favorites { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }

@@ -59,10 +59,14 @@ public class DeliveryIntegrationTests : IClassFixture<AgencyWebApplicationFactor
             title = $"Delivery Flow Watch {Guid.NewGuid():N}",
             description = "Sleek wristwatch for delivery lifecycle testing.",
             price = 500.00m,
-            condition = "New"
+            condition = "New",
+            imageUrl = "/uploads/test.jpg"
         });
         createProdResponse.EnsureSuccessStatusCode();
         var product = (await createProdResponse.Content.ReadFromJsonAsync<ProductDto>())!;
+
+        var adminClient = _factory.CreateClient();
+        await adminClient.ApproveProductAsync(product.Id);
 
         var checkoutResponse = await buyerClient.PostAsJsonAsync("/api/orders", new
         {

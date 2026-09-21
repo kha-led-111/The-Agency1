@@ -60,11 +60,20 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.IdempotencyKey)
             .HasMaxLength(120);
 
+        builder.HasIndex(x => x.BuyerId);
+        builder.HasIndex(x => x.DeliveryAgentId);
+        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.CreatedAtUtc);
         builder.HasIndex(x => new { x.BuyerId, x.IdempotencyKey });
 
         builder.HasOne(x => x.Buyer)
             .WithMany()
             .HasForeignKey(x => x.BuyerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.DeliveryAgent)
+            .WithMany()
+            .HasForeignKey(x => x.DeliveryAgentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.OrderItems)

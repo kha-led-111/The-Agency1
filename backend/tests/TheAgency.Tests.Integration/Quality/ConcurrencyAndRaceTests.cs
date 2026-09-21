@@ -38,10 +38,14 @@ public sealed class ConcurrencyAndRaceTests : IClassFixture<AgencyWebApplication
             title = "Exclusive Collector Watch",
             description = "One-of-a-kind timepiece available in marketplace.",
             price = 1000.0m,
-            condition = "LikeNew"
+            condition = "LikeNew",
+            imageUrl = "/uploads/test.jpg"
         });
         createProdResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var product = (await createProdResp.Content.ReadFromJsonAsync<ProductDto>())!;
+
+        var adminClient1 = _factory.CreateClient();
+        await adminClient1.ApproveProductAsync(product.Id);
 
         // 2. Prepare 15 distinct buyer clients
         var concurrentBuyersCount = 15;
@@ -91,10 +95,14 @@ public sealed class ConcurrencyAndRaceTests : IClassFixture<AgencyWebApplication
             title = "Idempotency Test Item",
             description = "Unique item description for idempotency testing.",
             price = 150.0m,
-            condition = "New"
+            condition = "New",
+            imageUrl = "/uploads/test.jpg"
         });
         createProdResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var product = (await createProdResp.Content.ReadFromJsonAsync<ProductDto>())!;
+
+        var adminClient2 = _factory.CreateClient();
+        await adminClient2.ApproveProductAsync(product.Id);
 
         var buyerReg = await client.RegisterAsync($"buyer_idem_{Guid.NewGuid():N}@example.com");
         var buyerAuth = (await buyerReg.Content.ReadFromJsonAsync<Application.Identity.Common.AuthenticationResult>())!;

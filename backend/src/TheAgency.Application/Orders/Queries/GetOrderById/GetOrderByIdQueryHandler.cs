@@ -22,6 +22,7 @@ public sealed class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery
     {
         var order = await _context.Orders
             .AsNoTracking()
+            .Include(o => o.DeliveryAgent)
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);

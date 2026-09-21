@@ -95,7 +95,22 @@ public static class AuthClientExtensions
             password = "Password123!",
             firstName = "Alice",
             lastName = "Smith",
-            phoneNumber = "1112223333"
+            phoneNumber = "01000000000"
         });
+    }
+
+    public static async Task ApproveProductAsync(this HttpClient client, Guid productId)
+    {
+        var loginResp = await client.PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "khaledgmal644@gmail.com",
+            password = "Admin123!"
+        });
+        loginResp.EnsureSuccessStatusCode();
+        var auth = (await loginResp.Content.ReadFromJsonAsync<TheAgency.Application.Identity.Common.AuthenticationResult>())!;
+        client.UseBearer(auth.AccessToken);
+
+        var approveResp = await client.PostAsync($"/api/admin/products/{productId}/approve", null);
+        approveResp.EnsureSuccessStatusCode();
     }
 }

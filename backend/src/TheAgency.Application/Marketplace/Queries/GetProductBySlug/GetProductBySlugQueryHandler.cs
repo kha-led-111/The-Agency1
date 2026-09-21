@@ -20,10 +20,13 @@ public sealed class GetProductBySlugQueryHandler : IRequestHandler<GetProductByS
 
     public async Task<ProductDto> Handle(GetProductBySlugQuery request, CancellationToken cancellationToken)
     {
+        var isGuid = System.Guid.TryParse(request.Slug, out var productId);
+
         var product = await _context.Products
             .AsNoTracking()
             .Include(x => x.Category)
-            .FirstOrDefaultAsync(x => x.Slug == request.Slug, cancellationToken);
+            .Include(x => x.Images)
+            .FirstOrDefaultAsync(x => x.Slug == request.Slug || (isGuid && x.Id == productId), cancellationToken);
 
         if (product is null)
         {

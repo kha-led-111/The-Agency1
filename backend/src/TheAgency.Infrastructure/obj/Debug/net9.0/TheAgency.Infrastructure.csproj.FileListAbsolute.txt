@@ -17,3 +17,4 @@ D:\web\elwkalla\backend\src\TheAgency.Infrastructure\obj\Debug\net9.0\refint\The
 D:\web\elwkalla\backend\src\TheAgency.Infrastructure\obj\Debug\net9.0\TheAgency.Infrastructure.pdb
 D:\web\elwkalla\backend\src\TheAgency.Infrastructure\obj\Debug\net9.0\TheAgency.Infrastructure.genruntimeconfig.cache
 D:\web\elwkalla\backend\src\TheAgency.Infrastructure\obj\Debug\net9.0\ref\TheAgency.Infrastructure.dll
+D:\web\elwkalla\backend\src\TheAgency.Infrastructure\obj\Debug\net9.0\TheAgency.Infrastructure.sourcelink.json

@@ -22,6 +22,7 @@ public sealed class GetMyOrdersQueryHandler : IRequestHandler<GetMyOrdersQuery, 
     {
         var query = _context.Orders
             .AsNoTracking()
+            .Include(o => o.DeliveryAgent)
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
             .AsQueryable();
