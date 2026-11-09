@@ -1,10 +1,10 @@
-
 import type { NextConfig } from "next";
 
 const apiUrl = process.env.API_URL || "http://localhost:5184";
+
 console.log(
-     `[next.config] API_URL = ${process.env.API_URL ? apiUrl : "NOT SET, using fallback " + apiUrl}`
-   );
+  `[next.config] API_URL = ${process.env.API_URL ? apiUrl : "NOT SET, using fallback " + apiUrl}`
+);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
